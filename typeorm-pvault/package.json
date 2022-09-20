@@ -1,0 +1,23 @@
+{
+  "name": "typeorm-pvault",
+  "version": "1.0.0",
+  "main": "index.js",
+  "license": "MIT",
+  "scripts": {
+    "prepare": "npm run build",
+    "clean": "rm -rf lib",
+    "build": "tsc",
+    "test": "mocha -c -r ts-node/register test/*.spec.ts"
+  },
+  "peerDependencies": {
+    "typeorm": "^0.3.10"
+  },
+  "devDependencies": {
+    "chai": "^4.3.6",
+    "mocha": "^10.0.0",
+    "sqlite3": "^5.1.1",
+    "ts-node": "^10.9.1",
+    "typeorm": "^0.3.10",
+    "typescript": "^4.8.3"
+  }
+}

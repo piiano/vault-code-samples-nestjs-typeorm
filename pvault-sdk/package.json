@@ -1,0 +1,34 @@
+{
+  "name": "pvault-sdk",
+  "version": "1.0.0",
+  "module": "dist/index.d.ts",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "license": "MIT",
+  "scripts": {
+    "prepare": "npm run build",
+    "clean": "rm -rf lib",
+    "build": "tsc",
+    "start:dev": "yarn build -- -w",
+    "generate": "rm -rf ./generated && openapi --input ./openapi.yaml --output ./src/generated -c axios",
+    "test": "mocha -c -r ts-node/register test/*.spec.ts"
+  },
+  "dependencies": {
+    "openapi-typescript-codegen": "^0.23.0"
+  },
+  "peerDependencies": {
+    "axios": "^0.27.2",
+    "form-data": "^4.0.0"
+  },
+  "devDependencies": {
+    "@types/axios": "^0.14.0",
+    "@types/chai": "^4.3.3",
+    "@types/mocha": "^10.0.0",
+    "@types/node": "^18.7.23",
+    "chai": "^4.3.6",
+    "form-data": "^4.0.0",
+    "mocha": "^10.0.0",
+    "ts-node": "^10.9.1",
+    "typescript": "^4.8.4"
+  }
+}

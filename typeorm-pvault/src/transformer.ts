@@ -1,24 +1,29 @@
 import { ValueTransformer, FindOperator, In, Equal, Not } from "typeorm";
+import { addObject, tokenize, detokenize } from "../../pvault-sdk";
+import { Buffer } from "buffer";
 
 export class PvaultTokenTransformer implements ValueTransformer {
   //   constructor(private options: EncryptionOptions) {}
 
   public from(value?: string | null): string | undefined {
+    console.log("from");
+
     if (!value) {
       return;
     }
 
-    return "HI";
+    return Buffer.from(value, "base64").toString("utf8");
   }
 
-  public to(
+  public async to(
     value?: string | FindOperator<any> | null
-  ): string | FindOperator<any> | undefined {
+  ): Promise<string | FindOperator<any> | undefined> {
+    console.log("to");
     if ((value ?? null) === null) {
       return;
     }
     if (typeof value === "string") {
-      return "BYE";
+      return Buffer.from(value).toString("base64");
     }
     if (!value) {
       return;

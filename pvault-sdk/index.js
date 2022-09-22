@@ -130,6 +130,11 @@ async function main() {
 
   const res2 = await detokenize("persons", [token[0].token_id]);
   console.log("Detokenized", res2);
+
+  deasync(sleep(50));
+  console.log("After");
 }
 
-main();
+// main();
+
+export { addObject, tokenize, detokenize };

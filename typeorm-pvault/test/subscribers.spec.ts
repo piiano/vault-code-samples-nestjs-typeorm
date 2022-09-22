@@ -1,16 +1,15 @@
 import { afterEach, beforeEach, describe, it } from "mocha";
 import { expect } from "chai";
 import { Entity, DataSource, PrimaryGeneratedColumn, Column } from "typeorm";
-import { PvaultTokenTransformer } from "../src";
+import { ExtendedColumnOptions, PvaultTokenSubscriber } from "../src";
 
 @Entity()
 export class User {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column({
-    nullable: false,
-    transformer: new PvaultTokenTransformer(),
+  @Column(<ExtendedColumnOptions>{
+    tokenize: true,
   })
   email: string;
 
@@ -18,7 +17,7 @@ export class User {
   country: string;
 }
 
-describe("Transformer", function () {
+describe("Subscriber", function () {
   let connection: DataSource;
 
   this.timeout(10000);
@@ -29,6 +28,7 @@ describe("Transformer", function () {
       database: ":memory:",
       dropSchema: true,
       entities: [User],
+      subscribers: [PvaultTokenSubscriber],
       synchronize: true,
       logging: false,
     });
@@ -48,12 +48,20 @@ describe("Transformer", function () {
       country: "GM",
     };
 
-    await repo.insert(newUser);
+    // Clone newUser by spreading, because "insert" mutates the input.
+    await repo.insert({ ...newUser });
 
     const results = await repo.find();
 
-    // expect(results.length).to.equal(1);
-    // expect(results[0].email).to.equal(newUser.email);
-    // expect(results[0].country).to.equal(newUser.country);
+    expect(results.length).to.equal(1);
+    expect(results[0].email).to.equal(newUser.email);
+    expect(results[0].country).to.equal(newUser.country);
+
+    console.log(
+      await repo.findBy({
+        // email: "aaa@gmail.com",
+        email: "lala",
+      })
+    );
   });
 });

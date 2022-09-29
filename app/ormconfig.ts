@@ -8,7 +8,7 @@ const config: MongoConnectionOptions = {
   type: 'mongodb',
   ssl: false,
   synchronize: true,
-  entities: ['dist/src/**/*.entity.js'],
+  entities: ['dist/**/*.entity{.ts,.js}'],
 };
 
 export default config;

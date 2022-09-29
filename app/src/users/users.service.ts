@@ -4,28 +4,33 @@ import { Repository } from 'typeorm';
 import { UserCreateInput } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { User } from './entities/user.entity';
+import { PvaultRepository, PvaultWrapper } from './pvault.repository';
 
 @Injectable()
 export class UsersService {
+  private readonly tokenizedUserRepository: PvaultRepository<User>;
+
   constructor(
     @InjectRepository(User) private userRepository: Repository<User>,
-  ) {}
+  ) {
+    this.tokenizedUserRepository = PvaultWrapper(userRepository);
+  }
 
   create(inp: UserCreateInput): Promise<User> {
-    const user = this.userRepository.create({
+    const user = this.tokenizedUserRepository.create({
       email: inp.email,
       country: inp.country,
     });
 
-    return this.userRepository.save(user);
+    return this.tokenizedUserRepository.save(user);
   }
 
   findAll(): Promise<User[]> {
-    return this.userRepository.find();
+    return this.tokenizedUserRepository.find();
   }
 
   findOne(id: string) {
-    return this.userRepository.findOneOrFail(id);
+    return this.tokenizedUserRepository.findOneOrFail(id);
   }
 
   update(id: string, updateUserDto: UpdateUserDto) {
@@ -33,8 +38,8 @@ export class UsersService {
   }
 
   async remove(id: string) {
-    const found = await this.userRepository.findOne(id);
+    const found = await this.tokenizedUserRepository.findOne(id);
 
-    return this.userRepository.remove(found);
+    return this.tokenizedUserRepository.remove(found);
   }
 }

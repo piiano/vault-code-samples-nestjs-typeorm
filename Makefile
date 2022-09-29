@@ -8,7 +8,6 @@ MONGO_DOCKER_NAME	:= mongo
 APP_DIR				:= ./app
 SDK_DIR				:= ./pvault-sdk
 
-
 ###### MONGO ######
 .PHONY: mongo-run
 mongo-run: mongo-stop
@@ -42,17 +41,12 @@ app-run: mongo-run pvault-run
 	yarn --cwd $(APP_DIR) start:dev
 
 
-###### SDK ######
+###### SDK TYPESCRIPT ######
 IN_DOCKER_PWD	:= /local
 OPENAPI_YAML	:= $(SDK_DIR)/openapi.yaml
 
-$(SDK_DIR)/generated_javascript/src/index.js: $(OPENAPI_YAML)
-	docker run --rm -v "${PWD}:$(IN_DOCKER_PWD)" -w $(IN_DOCKER_PWD) openapitools/openapi-generator-cli generate -i $(OPENAPI_YAML) -g javascript -o $(SDK_DIR)/generated_javascript
+$(SDK_DIR)/generated/index.ts:
+	yarn --cwd $(SDK_DIR) generate
 
-$(SDK_DIR)/generated_javascript/node_modules: $(SDK_DIR)/generated_javascript/package.json
-	yarn --cwd $(SDK_DIR)/generated_javascript
-	touch $@
-
-.PHONY: generate-sdk-js
-generate-sdk-js: $(SDK_DIR)/generated_javascript/src/index.js \
-				 $(SDK_DIR)/generated_javascript/node_modules
+.PHONY: generate-sdk-ts
+generate-sdk-ts: $(SDK_DIR)/generated/index.ts

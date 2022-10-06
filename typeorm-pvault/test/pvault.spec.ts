@@ -1,39 +1,50 @@
-import { afterEach, beforeEach, after, describe, it } from "mocha";
+import { afterEach, beforeEach, describe, it } from "mocha";
 import { expect } from "chai";
 import * as chai from "chai";
 chai.use(require("chai-uuid"));
-import {
-  Entity,
-  DataSource,
-  PrimaryGeneratedColumn,
-  Column,
-  SimpleConsoleLogger,
-} from "typeorm";
+import { Entity, Column, ObjectIdColumn } from "typeorm";
 import { plainToClass } from "class-transformer";
 import * as utils from "./utils";
-import {
-  ExtendedColumnOptions,
-  PvaultTokenTransformer,
-  PvaultWp,
-} from "../src";
+import { ExtendedColumnOptions, PvaultWp } from "../src";
+import * as sdk from "@pvault-sdk";
 
 const collection = "users";
 
+class Contact {
+  @Column(<ExtendedColumnOptions>{
+    tokenize: true,
+  })
+  ssn: string;
+
+  @Column({
+    nullable: true,
+  })
+  age: number;
+}
+
 @Entity()
 export class User {
-  @PrimaryGeneratedColumn()
+  @ObjectIdColumn()
   id: number;
 
-  @Column()
+  @Column({
+    nullable: true,
+  })
   userName: string;
 
-  @Column()
+  @Column({
+    nullable: true,
+  })
   password: string;
 
-  @Column()
+  @Column({
+    nullable: true,
+  })
   firstName: string;
 
-  @Column()
+  @Column({
+    nullable: true,
+  })
   lastName: string;
 
   @Column(<ExtendedColumnOptions>{
@@ -41,28 +52,23 @@ export class User {
   })
   email: string;
 
-  @Column()
+  @Column({
+    nullable: true,
+  })
   country: string;
+
+  @Column({
+    nullable: true,
+  })
+  contact: Contact;
 }
 
 describe("Pvault", function () {
-  let connection: DataSource;
+  const PvaultService = new PvaultWp(collection);
 
-  this.timeout(10000);
+  this.timeout(1000 * 30); // 30sec.
 
   beforeEach(async () => {
-    connection = new DataSource({
-      type: "sqlite",
-      database: ":memory:",
-      dropSchema: true,
-      entities: [User],
-      synchronize: true,
-      logging: false,
-    });
-
-    // Initialize a connection to the storage.
-    await connection.initialize();
-
     // Start Vault.
     await utils.run(
       `docker run --rm \
@@ -79,42 +85,135 @@ describe("Pvault", function () {
     await utils.run(`docker exec -i pvault-dev pvault collection add --collection-pvschema "
     ${collection} PERSONS (
         email EMAIL,
+        ssn SSN NULL,
     )"`);
   });
 
   afterEach(async () => {
-    await connection.destroy();
-  });
-
-  after(async function () {
     // Clean PVault docker container.
     await utils.run("docker rm -f pvault-dev");
   });
 
-  it("sanity roundtrip", async function () {
-    const repo = await connection.getRepository(User);
+  it("from-to", async function () {
+    // Create base user.
+    const newUser = plainToClass(User, {
+      email: "aaa@gmail.com",
+      country: "GM",
+      contact: plainToClass(Contact, {
+        ssn: "123-12-1235",
+        age: 80,
+      }),
+    });
+    const original = JSON.parse(JSON.stringify(newUser));
 
+    // Protect it - Tokenize relevant fields.
+    const { entity: protectedUser } =
+      await PvaultService.insertAndPrepareEntity(newUser);
+
+    // Detokenize and make sure it equals to the original.
+    const returnedUser = await PvaultService.from(protectedUser);
+
+    expect(JSON.stringify(protectedUser)).to.equal(JSON.stringify(original));
+    expect(returnedUser).to.equal(protectedUser);
+  });
+
+  it("insert-get-delete", async function () {
+    // Create base user.
+    const foreignId = "XXXXXX";
+    const newUser = plainToClass(User, {
+      email: "aaa@gmail.com",
+      country: "GM",
+      id: foreignId,
+    });
+
+    // Insert user.
+    await PvaultService.insertAndPrepareEntity(newUser);
+
+    // Make sure it is stored on Vault as well.
+    let listOfVaultObjs = await sdk.ObjectsService.getObjects(
+      collection,
+      "AppFunctionality",
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      ["unsafe"]
+    );
+    expect(listOfVaultObjs.results).to.not.be.undefined;
+    expect(listOfVaultObjs.results!.length).to.equal(1);
+
+    // Get the user by foreign id.
+    await PvaultService.getVaultIdByForeign(foreignId);
+
+    // Delete the user.
+    await PvaultService.removeForeignId(foreignId);
+
+    // Make sure it's deleted from Vault.
+    listOfVaultObjs = await sdk.ObjectsService.getObjects(
+      collection,
+      "AppFunctionality",
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      ["unsafe"]
+    );
+    expect(listOfVaultObjs.results).to.not.be.undefined;
+    expect(listOfVaultObjs.results!.length).to.equal(0);
+  });
+
+  it("search", async function () {
     // Create base user.
     const newUser = plainToClass(User, {
       email: "aaa@gmail.com",
       country: "GM",
     });
+    const original = JSON.parse(JSON.stringify(newUser));
 
-    // Protect it - Tokenize relevant fields.
-    const protectedUser = await PvaultWp.to(newUser, collection);
+    await PvaultService.insertAndPrepareEntity(newUser);
 
-    // Insert.
-    await repo.insert(protectedUser);
+    // Search the user.
+    const fetchedUser = await PvaultService.getVaultIdByMatch(
+      {
+        email: original.email,
+      },
+      ["email"] // Get the email property.
+    );
+    expect(fetchedUser).to.not.be.undefined;
 
-    // Fetch from DB and make sure that it is actually tokenized.
-    const results = await repo.find();
-    expect(results.length).to.equal(1);
-    expect(results[0].email).to.not.equal(newUser.email);
-    expect(results[0].email).to.equal(protectedUser.email);
-    expect(results[0].email).to.be.a.uuid("v4");
+    for (const propName in fetchedUser) {
+      expect(fetchedUser![propName]).to.equal(original[propName]);
+    }
+  });
 
-    // Detokenize and make sure it equals to the original.
-    const returnedUser = await PvaultWp.from(protectedUser, collection);
-    expect(returnedUser).to.equal(protectedUser);
+  it("update", async function () {
+    // Insert user.
+    const foreignId = "XXXXXX";
+    const newUser = plainToClass(User, {
+      email: "aaa@gmail.com",
+      country: "GM",
+      id: foreignId,
+    });
+    const toUpdate = plainToClass(User, { ...newUser });
+
+    await PvaultService.insertAndPrepareEntity(newUser);
+
+    // Update.
+    toUpdate.firstName = "ZORG";
+    toUpdate.email = "bbb@gmail.com";
+    const original = plainToClass(User, { ...toUpdate });
+    await PvaultService.updateAndPrepareEntity(foreignId, toUpdate);
+
+    // Search the user.
+    const fetchedUser = await PvaultService.getVaultIdByForeign(foreignId, [
+      "email",
+    ]);
+    expect(fetchedUser).to.not.be.undefined;
+
+    for (const propName in fetchedUser) {
+      expect(fetchedUser![propName]).to.equal(original[propName]);
+    }
   });
 });

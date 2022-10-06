@@ -1,6 +1,6 @@
 openapi: 3.0.3
 info:
-  x-text-ref-description: './overview.md'
+  x-text-ref-description: '../overview.md'
   contact:
     name: Us
     url: https://piiano.com/contact-us/
@@ -20,7 +20,7 @@ tags:
     name: Data types and transformations
   - description: The object endpoints allow you to add, retrieve and update objects.
     name: Objects
-  - description: The token endpoints allow you to tokenize, de-tokenize, update and delete tokens.
+  - description: The token endpoints allow you to tokenize, detokenize, update and delete tokens.
     name: Tokens
   - description: The IAM (identity and access management) endpoints allow you to set and retrieve IAM configuration, and to regenerate user API keys.
     name: IAM
@@ -36,24 +36,16 @@ paths:
       summary: List collections
       x-text-ref-description: './control/GetAllCollections.md'
       parameters:
-        - $ref: '#/components/parameters/adhoc_reason'
-        - $ref: '#/components/parameters/reason'
-        - description: When set to `pvschema`, returns the collections in the PVSchema format. Otherwise, returns the JSON format.
-          in: query
-          name: format
-          schema:
-            enum:
-              - pvschema
-            type: string
+        - $ref: '#/components/parameters/jsonOrPvSchemaFormat'
         - description: |
             Options for the operation. Options include:
-            - `hide_builtins` – hide built-in properties from response.
+            - `show_builtins` – show built-in properties from response.
           in: query
           name: options
           schema:
             items:
               enum:
-                - hide_builtins
+                - show_builtins
               type: string
             type: array
       responses:
@@ -62,9 +54,12 @@ paths:
           content:
             application/json:
               schema:
+                type: array
                 items:
                   $ref: '#/components/schemas/models.Collection'
-                type: array
+            application/pvschema:
+              schema:
+                type: string
         400:
           $ref: '#/components/responses/400'
         401:
@@ -87,31 +82,27 @@ paths:
       summary: Add collection
       x-text-ref-description: './control/AddCollection.md'
       parameters:
-        - $ref: '#/components/parameters/adhoc_reason'
-        - $ref: '#/components/parameters/reason'
-        - description: When set to `pvschema`, returns the added collection in the PVSchema format. Otherwise, returns the JSON format.
-          in: query
-          name: format
-          schema:
-            enum:
-              - pvschema
-            type: string
+        - $ref: '#/components/parameters/jsonOrPvSchemaFormat'
         - description: |
             Options for the operation. Options include:
-            - `hide_builtins` – hide built-in properties from response.
+            - `show_builtins` – show built-in properties from response.
           in: query
           name: options
           schema:
             items:
               enum:
-                - hide_builtins
+                - show_builtins
               type: string
             type: array
       requestBody:
+        x-has-pii: false
         content:
           application/json:
             schema:
               $ref: '#/components/schemas/models.Collection'
+          application/pvschema:
+            schema:
+              type: string
         description: Details of the collection including its properties.
         required: true
         x-originalParamName: collection
@@ -123,7 +114,7 @@ paths:
                 $ref: '#/components/schemas/models.Collection'
             application/pvschema:
               schema:
-                $ref: '#/components/schemas/models.Collection'
+                type: string
           description: The request is successful.
         400:
           $ref: '#/components/responses/400'
@@ -149,8 +140,6 @@ paths:
       x-text-ref-description: './control/DeleteCollection.md'
       parameters:
         - $ref: '#/components/parameters/collection'
-        - $ref: '#/components/parameters/adhoc_reason'
-        - $ref: '#/components/parameters/reason'
       responses:
         200:
           description: The request is successful.
@@ -181,24 +170,16 @@ paths:
       x-text-ref-description: './control/GetCollection.md'
       parameters:
         - $ref: '#/components/parameters/collection'
-        - $ref: '#/components/parameters/adhoc_reason'
-        - $ref: '#/components/parameters/reason'
-        - description: When set to `pvschema`, returns the collection in the PVSchema format. Otherwise, returns the JSON format.
-          in: query
-          name: format
-          schema:
-            enum:
-              - pvschema
-            type: string
+        - $ref: '#/components/parameters/jsonOrPvSchemaFormat'
         - description: |
             Options for the operation. Options include:
-            - `hide_builtins` – hide built-in properties from response.
+            - `show_builtins` – show built-in properties from response.
           in: query
           name: options
           schema:
             items:
               enum:
-                - hide_builtins
+                - show_builtins
               type: string
             type: array
       responses:
@@ -207,6 +188,9 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/models.Collection'
+            application/pvschema:
+              schema:
+                type: string
           description: The request is successful.
         400:
           $ref: '#/components/responses/400'
@@ -240,31 +224,27 @@ paths:
           required: true
           schema:
             type: string
-        - $ref: '#/components/parameters/adhoc_reason'
-        - $ref: '#/components/parameters/reason'
-        - description: When set to `pvschema`, returns the updated collection in the PVSchema format. Otherwise, returns the JSON format.
-          in: query
-          name: format
-          schema:
-            enum:
-              - pvschema
-            type: string
+        - $ref: '#/components/parameters/jsonOrPvSchemaFormat'
         - description: |
             Options for the operation. Options include:
-            - `hide_builtins` – hide built-in properties from response.
+            - `show_builtins` – show built-in properties from response.
           in: query
           name: options
           schema:
             items:
               enum:
-                - hide_builtins
+                - show_builtins
               type: string
             type: array
       requestBody:
+        x-has-pii: false
         content:
           application/json:
             schema:
               $ref: '#/components/schemas/models.Collection'
+          application/pvschema:
+            schema:
+              type: string
         description: Details of the collection including its properties.
         required: true
         x-originalParamName: collectionChanges
@@ -274,6 +254,9 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/models.Collection'
+            application/pvschema:
+              schema:
+                type: string
           description: The request is successful.
         400:
           $ref: '#/components/responses/400'
@@ -310,17 +293,15 @@ paths:
           required: true
           schema:
             type: string
-        - $ref: '#/components/parameters/adhoc_reason'
-        - $ref: '#/components/parameters/reason'
         - description: |
             Options for the operation. Options include: 
-            - `hide_builtins` – hide built-in properties from response.
+            - `show_builtins` – show built-in properties from response.
           in: query
           name: options
           schema:
             items:
               enum:
-                - hide_builtins
+                - show_builtins
               type: string
             type: array
       responses:
@@ -371,8 +352,6 @@ paths:
           required: true
           schema:
             type: string
-        - $ref: '#/components/parameters/adhoc_reason'
-        - $ref: '#/components/parameters/reason'
       responses:
         200:
           description: The request is successful.
@@ -408,8 +387,6 @@ paths:
           required: true
           schema:
             type: string
-        - $ref: '#/components/parameters/adhoc_reason'
-        - $ref: '#/components/parameters/reason'
         - description: The name of the property.
           in: path
           name: property
@@ -446,7 +423,7 @@ paths:
       x-docs-sidebar-precedence: 4
     patch:
       operationId: update-collection-property
-      summary: Modify collection property
+      summary: Update collection property
       x-text-ref-description: './control/UpdateProperty.md'
       parameters:
         - description: The name of the collection containing the property.
@@ -461,9 +438,8 @@ paths:
           required: true
           schema:
             type: string
-        - $ref: '#/components/parameters/adhoc_reason'
-        - $ref: '#/components/parameters/reason'
       requestBody:
+        x-has-pii: false
         content:
           application/json:
             schema:
@@ -514,9 +490,8 @@ paths:
           required: true
           schema:
             type: string
-        - $ref: '#/components/parameters/adhoc_reason'
-        - $ref: '#/components/parameters/reason'
       requestBody:
+        x-has-pii: false
         content:
           application/json:
             schema:
@@ -557,9 +532,6 @@ paths:
       operationId: get-iam-conf
       summary: Get IAM configuration
       x-text-ref-description: './control/GetIAMConf.md'
-      parameters:
-        - $ref: '#/components/parameters/adhoc_reason'
-        - $ref: '#/components/parameters/reason'
       responses:
         200:
           content:
@@ -587,10 +559,8 @@ paths:
       operationId: set-iam-conf
       summary: Set IAM configuration
       x-text-ref-description: './control/SetIAMConf.md'
-      parameters:
-        - $ref: '#/components/parameters/adhoc_reason'
-        - $ref: '#/components/parameters/reason'
       requestBody:
+        x-has-pii: false
         content:
           application/toml:
             schema:
@@ -622,10 +592,8 @@ paths:
       operationId: regenerate-user-api-key
       summary: Regenerate user API key
       x-text-ref-description: './control/RegenerateUserAPIKey.md'
-      parameters:
-        - $ref: '#/components/parameters/adhoc_reason'
-        - $ref: '#/components/parameters/reason'
       requestBody:
+        x-has-pii: false
         content:
           application/json:
             schema:
@@ -634,6 +602,10 @@ paths:
         required: true
       responses:
         200:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/models.APIKey'
           description: The request is successful.
         400:
           $ref: '#/components/responses/400'
@@ -687,9 +659,6 @@ paths:
       operationId: list-transformations
       summary: List transformations
       x-text-ref-description: './control/ListTransformations.md'
-      parameters:
-        - $ref: '#/components/parameters/adhoc_reason'
-        - $ref: '#/components/parameters/reason'
       responses:
         200:
           content:
@@ -721,9 +690,6 @@ paths:
       operationId: list-property-types
       summary: List property types
       x-text-ref-description: './control/ListPropertyTypes.md'
-      parameters:
-        - $ref: '#/components/parameters/adhoc_reason'
-        - $ref: '#/components/parameters/reason'
       responses:
         200:
           content:
@@ -755,9 +721,6 @@ paths:
       operationId: get-cluster-info
       summary: Get cluster information
       x-text-ref-description: './control/GetClusterInfo.md'
-      parameters:
-        - $ref: '#/components/parameters/adhoc_reason'
-        - $ref: '#/components/parameters/reason'
       responses:
         200:
           content:
@@ -868,7 +831,7 @@ paths:
         - description: |
             Options for the operation. Options include:
             - `unsafe` – fetch all the properties, cannot be specified with `props`.
-            - `hide_builtins` – hide built-in properties, can only be specified with `unsafe`.
+            - `show_builtins` – show built-in properties, can only be specified with `unsafe`.
             - `deleted` – get only deleted objects.
           in: query
           name: options
@@ -913,7 +876,7 @@ paths:
       x-docs-sidebar-precedence: 1
     patch:
       operationId: update-object-by-id
-      summary: Modify object
+      summary: Update object
       x-text-ref-description: './data/UpdateObjectByID.md'
       parameters:
         - description: The name of the collection containing the object.
@@ -958,6 +921,7 @@ paths:
               type: string
             type: array
       requestBody:
+        x-has-pii: true
         content:
           application/json:
             schema:
@@ -1010,6 +974,7 @@ paths:
             type: string
             pattern: '^[0-9]*$'
       requestBody:
+        x-has-pii: true
         content:
           application/json:
             schema:
@@ -1085,13 +1050,6 @@ paths:
             items:
               type: string
               format: uuid
-        - description: The list of property names and transformations. To include multiple names and transformation bindings, provide a comma-separated list. For example, `props=first_name,last_name`. If the `unsafe` option is used, must be empty.
-          in: query
-          name: props
-          schema:
-            type: array
-            items:
-              type: string
       responses:
         200:
           content:
@@ -1140,7 +1098,7 @@ paths:
         - description: |
             Options for the operation. Options include:
             - `unsafe` – fetch all the properties, cannot be specified with `props`.
-            - `hide_builtins` – hide built-in properties, can only be specified with `unsafe`.
+            - `show_builtins` – show built-in properties, can only be specified with `unsafe`.
             - `deleted` – get only deleted objects.
           in: query
           name: options
@@ -1156,11 +1114,27 @@ paths:
             items:
               type: string
       requestBody:
+        x-has-pii: true
         content:
           application/json:
             schema:
               $ref: '#/components/schemas/models.Query'
-        description: 'The query. This is a JSON object consisting of property keys and match values. For example: <code>&quot;match&quot;: {&quot;first_name&quot;: &quot;John&quot;, &quot;last_name&quot;: &quot;Doe&quot;}</code> is the equivalent to: <code>where first_name = &quot;John&quot; AND last_name=&quot;Doe&quot;</code>'
+        description: |
+          The query.
+          This is a JSON object consisting of property keys and match values.
+          For example:
+          ```json
+          {
+            "match": {
+              "first_name": "John",
+              "last_name": "Doe"
+            }
+          }
+          ```
+          is the equivalent to:
+          ```sql
+          where first_name = "John" AND last_name="Doe"
+          ```
         required: true
         x-originalParamName: query
       responses:
@@ -1192,41 +1166,20 @@ paths:
         - Objects
       x-docs-sidebar-precedence: 3
   /api/pvlt/1.0/data/collections/{collection}/query/tokens:
-    get:
-      operationId: get-token
-      summary: Get tokens metadata
-      x-text-ref-description: './data/GetToken.md'
+    post:
+      operationId: search-tokens
+      summary: Search tokens
+      x-text-ref-description: './data/SearchTokens.md'
       parameters:
-        - description: Comma-separated list of object IDs.
-          in: query
-          name: object_id
-          schema:
-            items:
-              type: string
-            type: array
         - description: |
             Options for the operation. Options include:
             - `deleted` – get only deleted tokens.
           in: query
           name: options
           schema:
+            type: array
             items:
               type: string
-            type: array
-        - description: Comma-separated list of tags.
-          in: query
-          name: tag
-          schema:
-            items:
-              type: string
-            type: array
-        - description: Comma-separated list of token IDs.
-          in: query
-          name: token_id
-          schema:
-            items:
-              type: string
-            type: array
         - description: The name of the collection containing the object.
           in: path
           name: collection
@@ -1236,6 +1189,14 @@ paths:
         - $ref: '#/components/parameters/adhoc_reason'
         - $ref: '#/components/parameters/reason'
         - $ref: '#/components/parameters/reload_cache'
+      requestBody:
+        x-has-pii: false
+        description: 'The query. This is a JSON object consisting of query filters.'
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/models.QueryToken'
       responses:
         200:
           content:
@@ -1268,9 +1229,9 @@ paths:
       x-docs-sidebar-precedence: 6
   /api/pvlt/1.0/data/collections/{collection}/tokens:
     delete:
-      operationId: delete-token
-      summary: Delete token
-      x-text-ref-description: './data/DeleteToken.md'
+      operationId: delete-tokens
+      summary: Delete tokens
+      x-text-ref-description: './data/DeleteTokens.md'
       parameters:
         - description: Comma-separated list of object IDs.
           in: query
@@ -1293,7 +1254,7 @@ paths:
             items:
               type: string
             type: array
-        - description: | 
+        - description: |
             Options for the operation. Options include:
             - `hard_delete` – permanently delete the tokens.
             - `deleted` – remove only deleted tokens, requires `hard_delete` to be specified.
@@ -1338,7 +1299,7 @@ paths:
       x-docs-sidebar-precedence: 3
     get:
       operationId: detokenize
-      summary: Detokenize
+      summary: Detokenize tokens
       x-text-ref-description: './data/Detokenize.md'
       parameters:
         - description: Comma-separated list of object IDs.
@@ -1409,9 +1370,9 @@ paths:
         - Tokens
       x-docs-sidebar-precedence: 2
     patch:
-      operationId: update-token
-      summary: Update token
-      x-text-ref-description: './data/UpdateToken.md'
+      operationId: update-tokens
+      summary: Update tokens
+      x-text-ref-description: './data/UpdateTokens.md'
       parameters:
         - description: Token time to live (TTL) in seconds. If not set, the token's expiry date is not changed.
           in: query
@@ -1460,6 +1421,7 @@ paths:
         - $ref: '#/components/parameters/reason'
         - $ref: '#/components/parameters/reload_cache'
       requestBody:
+        x-has-pii: false
         content:
           application/json:
             schema:
@@ -1493,7 +1455,7 @@ paths:
       x-docs-sidebar-precedence: 4
     post:
       operationId: tokenize
-      summary: Tokenize
+      summary: Tokenize properties of an object data
       x-text-ref-description: './data/Tokenize.md'
       parameters:
         - description: 'Token time to live (TTL) in seconds. If not set, the default TTL is used. See the `PVAULT_TTL_TOKENS` time to live environment variable.'
@@ -1512,6 +1474,7 @@ paths:
         - $ref: '#/components/parameters/reason'
         - $ref: '#/components/parameters/reload_cache'
       requestBody:
+        x-has-pii: false
         content:
           application/json:
             schema:
@@ -1551,9 +1514,9 @@ paths:
       x-docs-sidebar-precedence: 1
   /api/pvlt/1.0/data/collections/{collection}/rotate/tokens:
     post:
-      operationId: rotate-token
-      summary: Rotate token
-      x-text-ref-description: './data/RotateToken.md'
+      operationId: rotate-tokens
+      summary: Rotate tokens
+      x-text-ref-description: './data/RotateTokens.md'
 
       parameters:
         - description: Comma-separated list of token IDs.
@@ -1636,9 +1599,6 @@ paths:
       operationId: rotate-keys
       summary: Rotate data encryption keys
       x-text-ref-description: './control/RotateKeysets.md'
-      parameters:
-        - $ref: '#/components/parameters/adhoc_reason'
-        - $ref: '#/components/parameters/reason'
       responses:
         200:
           description: The request is successful.
@@ -1659,7 +1619,7 @@ paths:
       tags:
         - System
   /api/pvlt/1.0/system/admin/lifecycle/gc:
-    get:
+    post:
       operationId: garbage-collection
       summary: Purge expired and soft deleted objects and tokens
       x-text-ref-description: './data/GarbageCollection.md'
@@ -1714,9 +1674,6 @@ paths:
       operationId: clear-all-conf-vars
       summary: Clear configuration variables
       x-text-ref-description: './control/ClearAllConfVars.md'
-      parameters:
-        - $ref: '#/components/parameters/adhoc_reason'
-        - $ref: '#/components/parameters/reason'
       responses:
         200:
           description: The request is successful.
@@ -1748,8 +1705,6 @@ paths:
           required: true
           schema:
             type: string
-        - $ref: '#/components/parameters/adhoc_reason'
-        - $ref: '#/components/parameters/reason'
       responses:
         200:
           content:
@@ -1784,9 +1739,8 @@ paths:
           required: true
           schema:
             type: string
-        - $ref: '#/components/parameters/adhoc_reason'
-        - $ref: '#/components/parameters/reason'
       requestBody:
+        x-has-pii: false
         content:
           application/json:
             schema:
@@ -1818,9 +1772,6 @@ paths:
       operationId: trigger-error
       summary: Trigger an artificial error
       x-text-ref-description: './control/Error.md'
-      parameters:
-        - $ref: '#/components/parameters/adhoc_reason'
-        - $ref: '#/components/parameters/reason'
       responses:
         400:
           $ref: '#/components/responses/400'
@@ -1844,9 +1795,6 @@ paths:
       operationId: get-configuration
       summary: Get system configuration
       x-text-ref-description: './control/Configuration.md'
-      parameters:
-        - $ref: '#/components/parameters/adhoc_reason'
-        - $ref: '#/components/parameters/reason'
       responses:
         200:
           content:
@@ -1876,9 +1824,6 @@ paths:
       operationId: get-license
       summary: Get license
       x-text-ref-description: './control/License.md'
-      parameters:
-        - $ref: '#/components/parameters/adhoc_reason'
-        - $ref: '#/components/parameters/reason'
       responses:
         200:
           content:
@@ -1908,9 +1853,6 @@ paths:
       operationId: get-vault-version
       summary: Get Vault version
       x-text-ref-description: './control/Version.md'
-      parameters:
-        - $ref: '#/components/parameters/adhoc_reason'
-        - $ref: '#/components/parameters/reason'
       responses:
         200:
           content:
@@ -1940,9 +1882,6 @@ paths:
       operationId: get-kms
       summary: Get KMS status
       x-text-ref-description: './control/GetKMSStatus.md'
-      parameters:
-        - $ref: '#/components/parameters/adhoc_reason'
-        - $ref: '#/components/parameters/reason'
       responses:
         200:
           content:
@@ -1969,6 +1908,16 @@ paths:
 
 components:
   parameters:
+    jsonOrPvSchemaFormat:
+      description: When set to `pvschema`, returns the collection in the PVSchema format. Otherwise, returns the JSON format.
+      in: query
+      name: format
+      schema:
+        type: string
+        enum:
+          - pvschema
+          - json
+        default: json
     collection:
       description: The name of the collection.
       in: path
@@ -2004,9 +1953,9 @@ components:
         enum:
           - AppFunctionality
           - Analytics
-          - Personalization
-          - DevelopersAdvertisingOrMarketing
-          - ThirdPartyAdvertising
+          - Notifications
+          - Marketing
+          - ThirdPartyMarketing
           - FraudPreventionSecurityAndCompliance
           - AccountManagement
           - Maintenance
@@ -2095,66 +2044,74 @@ components:
   schemas:
     models.ObjectID:
       type: object
+      additionalProperties: false
       properties:
         _id:
           type: string
           format: uuid
     models.UserName:
       type: object
+      additionalProperties: false
       properties:
         name:
           type: string
     auth.Config:
+      type: object
+      additionalProperties: false
       properties:
         policies:
+          type: object
           additionalProperties:
             $ref: '#/components/schemas/auth.Policy'
-          type: object
         roles:
+          type: object
           additionalProperties:
             $ref: '#/components/schemas/auth.Role'
-          type: object
         users:
+          type: object
           additionalProperties:
             $ref: '#/components/schemas/auth.User'
-          type: object
-      type: object
     auth.Policy:
+      type: object
+      additionalProperties: false
       properties:
         operations:
+          type: array
           items:
             type: string
-          type: array
         policyType:
           type: string
         reasons:
+          type: array
           items:
             type: string
-          type: array
         resources:
+          type: array
           items:
             type: string
-          type: array
-      type: object
     auth.Role:
+      type: object
+      additionalProperties: false
       properties:
         capabilities:
+          type: array
           items:
             type: string
-          type: array
         policies:
+          type: array
           items:
             type: string
-          type: array
-      type: object
     auth.User:
+      type: object
+      additionalProperties: false
       properties:
         disabled:
           type: boolean
         role:
           type: string
-      type: object
     config.Config:
+      type: object
+      additionalProperties: false
       properties:
         db:
           $ref: '#/components/schemas/config.DB'
@@ -2174,8 +2131,9 @@ components:
           $ref: '#/components/schemas/config.TLS'
         ttl:
           $ref: '#/components/schemas/config.TTL'
-      type: object
     config.DB:
+      type: object
+      additionalProperties: false
       properties:
         conn_max_lifetime_minutes:
           type: integer
@@ -2199,8 +2157,9 @@ components:
           type: boolean
         user:
           type: string
-      type: object
     config.Features:
+      type: object
+      additionalProperties: false
       properties:
         api_key_hashing:
           type: boolean
@@ -2208,15 +2167,19 @@ components:
           type: boolean
         policy_enforcement:
           type: boolean
-      type: object
+        mask_license:
+          type: boolean
     config.GC:
+      type: object
+      additionalProperties: false
       properties:
         batch_size:
           type: integer
         grace_period_days:
           type: integer
-      type: object
     config.KMS:
+      type: object
+      additionalProperties: false
       properties:
         cache_enable:
           type: boolean
@@ -2224,8 +2187,9 @@ components:
           type: string
         uri:
           type: string
-      type: object
     config.Log:
+      type: object
+      additionalProperties: false
       properties:
         customer_env:
           type: string
@@ -2235,12 +2199,13 @@ components:
           type: boolean
         datadog_enable:
           type: boolean
-        datadog_source:
+        datadog_env:
           type: string
         level:
           type: string
-      type: object
     config.Migration:
+      type: object
+      additionalProperties: false
       properties:
         auto_run:
           type: boolean
@@ -2252,13 +2217,15 @@ components:
           type: integer
         max_wait_between_retries:
           type: integer
-      type: object
     config.Sentry:
+      type: object
+      additionalProperties: false
       properties:
         enable:
           type: boolean
-      type: object
     config.Service:
+      type: object
+      additionalProperties: false
       properties:
         admin_api_key:
           type: string
@@ -2278,8 +2245,9 @@ components:
           type: number
         license:
           type: string
-      type: object
     config.TLS:
+      type: object
+      additionalProperties: false
       properties:
         cert_file:
           type: string
@@ -2289,8 +2257,9 @@ components:
           type: string
         selfsigned:
           type: boolean
-      type: object
     config.TTL:
+      type: object
+      additionalProperties: false
       properties:
         associated_objects:
           type: integer
@@ -2298,8 +2267,9 @@ components:
           type: integer
         unassociated_objects:
           type: integer
-      type: object
     gc.DeletionCount:
+      type: object
+      additionalProperties: false
       properties:
         collection_name:
           type: string
@@ -2307,8 +2277,9 @@ components:
           type: string
         count:
           type: integer
-      type: object
     models.Collection:
+      type: object
+      additionalProperties: false
       properties:
         creation_time:
           type: string
@@ -2340,8 +2311,9 @@ components:
       required:
         - name
         - type
-      type: object
     models.ConfVar:
+      type: object
+      additionalProperties: false
       properties:
         name:
           description: The name of the configuration variable.
@@ -2349,9 +2321,9 @@ components:
           type: string
         value:
           description: The value of the configuration variable.
-      type: object
     models.License:
       type: object
+      additionalProperties: false
       properties:
         key:
           description: The full license activation key.
@@ -2362,41 +2334,47 @@ components:
           type: string
           format: date-time
     models.ConfVarValue:
+      type: object
+      additionalProperties: false
       properties:
         value:
           description: The value of the configuration variable.
-      type: object
     models.ConfigurationDoc:
       description: Additional information about the transformation, as key-value pairs.
+      type: object
+      additionalProperties: false
       properties:
         non_masked_length:
           description: Example transformation control key, in this case controlling the number of characters not masked in a data type.
           example: 4
           type: integer
-      type: object
     models.DetokenizedToken:
+      type: object
+      additionalProperties: false
       properties:
         fields:
           $ref: '#/components/schemas/models.ObjectFields'
         token_id:
           type: string
-      type: object
     models.Health:
+      type: object
+      additionalProperties: false
       properties:
         status:
           description: The status of the service.
           example: pass
           type: string
-      type: object
     models.KMSStatus:
+      type: object
+      additionalProperties: false
       properties:
         name:
           description: The type of the configured KMS
           example: AWS
           type: string
-      type: object
     models.Object:
       type: object
+      additionalProperties: true
       example:
         date_of_birth: 1993-02-22
         email: patfar@example.com
@@ -2419,13 +2397,37 @@ components:
           example: b86718a3-f4a7-4e40-bb59-681f22b62649
           readOnly: true
           type: string
-      additionalProperties: true
     models.ObjectFields:
-      additionalProperties: true
       type: object
+      additionalProperties: true
     models.ObjectFieldsPage:
       type: object
+      additionalProperties: false
+      properties:
+        results:
+          description: The page objects.
+          type: array
+          items:
+            $ref: '#/components/schemas/models.ObjectFields'
+        paging:
+          $ref: '#/components/schemas/models.Paging'
+    models.Paging:
+      description: Pagination information.
+      type: object
+      additionalProperties: false
+      properties:
+        size:
+          type: number
+          description: Number of results in the current page.
+        remaining_count:
+          type: number
+          description: The remaining number of objects that can be read in ensuing calls to this method.
+        cursor:
+          type: string
+          description: An opaque string you should provide to get the next page.
     models.ProductVersion:
+      type: object
+      additionalProperties: false
       properties:
         db_schema_version:
           type: integer
@@ -2434,10 +2436,11 @@ components:
           type: string
         vault_version:
           description: The version of a Vault specified as a string consisting of version number, build number, and edition.
-          example: 1.0.0.300-LITE
+          example: 0.9.5.1-g2be0eb7e
           type: string
-      type: object
     models.Property:
+      type: object
+      additionalProperties: false
       properties:
         creation_time:
           description: The time when the property was created in an RFC3339 format.
@@ -2449,15 +2452,12 @@ components:
           description: The description of the property, If not provided, is set to an empty String.
           example: The object's middle name.
           type: string
-        is_array:
-          description: Whether the property is an array or a value.
-          example: true
-          type: boolean
         is_builtin:
           default: false
           description: Whether the property is created by Vault (or by the user)
           example: true
           type: boolean
+          readOnly: true
         is_encrypted:
           default: false
           description: Whether the value is stored encrypted and decrypted when retrieved by a caller. Encryption provides extra protection against a malicious actor gaining access to the backend storage.
@@ -2478,6 +2478,7 @@ components:
           description: When is_builtin is true, whether the user can modify values of this property.
           example: true
           type: boolean
+          readOnly: true
         is_unique:
           default: false
           description: Whether the backend storage enforces unique values.
@@ -2498,33 +2499,56 @@ components:
           example: STRING
           type: string
       required:
-        - is_array
         - name
         - pii_type_name
-      type: object
     models.Query:
+      type: object
+      additionalProperties: false
       properties:
         match:
           $ref: '#/components/schemas/models.QueryMap'
-      type: object
     models.QueryMap:
-      additionalProperties: true
       type: object
+      additionalProperties: true
+    models.QueryToken:
+      type: object
+      additionalProperties: false
+      properties:
+        object_id:
+          description: Object IDs to query.
+          type: array
+          items:
+            type: string
+            format: uuid
+        token_id:
+          description: Token IDs to query.
+          type: array
+          items:
+            type: string
+        tag:
+          description: tags to query.
+          type: array
+          items:
+            type: string
     models.RotatedToken:
+      type: object
+      additionalProperties: false
       properties:
         new_token_id:
           type: string
         old_token_id:
           type: string
-      type: object
     models.TokenAggregatedMetadata:
+      type: object
+      additionalProperties: false
       properties:
         max_effective_expiration_time:
           description: Latest expiry of all tokens with the token ID (UTC).
           type: string
           format: date-time
-      type: object
     models.TokenMetadata:
+      type: object
+      additionalProperties: false
       properties:
         agg:
           $ref: '#/components/schemas/models.TokenAggregatedMetadata'
@@ -2545,9 +2569,9 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/models.TokenRefMetadata'
-      type: object
     models.TokenRefMetadata:
       type: object
+      additionalProperties: false
       properties:
         creation_time:
           description: Creation time of the token (UTC).
@@ -2571,14 +2595,17 @@ components:
           items:
             type: string
     models.TokenValue:
+      type: object
+      additionalProperties: false
       properties:
         token_id:
           description: The value of the token.
           type: string
       required:
         - token_id
-      type: object
     models.TokenizeRequest:
+      type: object
+      additionalProperties: false
       properties:
         fpprops:
           description: Format preserving properties names to be used by the template for the ID generation.
@@ -2626,9 +2653,10 @@ components:
         - object_ids
         - props
         - type
-      type: object
     models.TransformationDoc:
       description: 'Details of a transformation that can be performed on a PII data type within a collection. Note: `pii_type_id` and `name` together are also a unique identifier of a transformation in a collection.'
+      type: object
+      additionalProperties: false
       properties:
         configuration:
           $ref: '#/components/schemas/models.ConfigurationDoc'
@@ -2641,16 +2669,18 @@ components:
           example: email
           readOnly: true
           type: string
-      type: object
     models.UpdateTokenRequest:
+      type: object
+      additionalProperties: false
       properties:
         tags:
           description: Replacement tags for the token.
           items:
             type: string
           type: array
-      type: object
     piitype.PIIType:
+      type: object
+      additionalProperties: false
       properties:
         description:
           description: The description of the PII type.
@@ -2662,8 +2692,9 @@ components:
           example: STRING
           readOnly: true
           type: string
-      type: object
     models.AllGenerations:
+      type: object
+      additionalProperties: false
       properties:
         vault:
           $ref: '#/components/schemas/models.VaultGeneration'
@@ -2672,9 +2703,10 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/models.Worker'
-      type: object
     models.VaultGeneration:
       description: 'Vault Generation.'
+      type: object
+      additionalProperties: false
       properties:
         generation_number:
           description: Generation number.
@@ -2683,9 +2715,10 @@ components:
           description: Modified at.
           type: string
           format: date-time
-      type: object
     models.Worker:
       description: 'Worker.'
+      type: object
+      additionalProperties: false
       properties:
         worker_id:
           description: Worker id.
@@ -2700,16 +2733,30 @@ components:
         refresh_interval_seconds:
           description: Refresh interval in seconds.
           type: integer
+    models.APIKey:
       type: object
+      additionalProperties: false
+      properties:
+        api_key:
+          description: The new API key generated for the user.
+          example: 'some_user'
+          type: string
+        api_key_expiry:
+          description: The expiry time of the API key.
+          example: '2022-07-05T08:47:12.047Z'
+          type: string
+          format: date-time
     rest.HTTPError:
+      type: object
+      additionalProperties: false
       properties:
         context:
-          description: The error context.
-          example: 
-            objectid: abc
+          type: object
           additionalProperties:
             type: string
-          type: object
+          description: The error context.
+          example:
+            object_id: abc
         error_code:
           description: The error code.
           example: 'PVxxxx'
@@ -2718,12 +2765,9 @@ components:
           description: The error message.
           example: 'The object is not found.'
           type: string
-      type: object
-    sid.ID:
-      type: object
   securitySchemes:
     bearerAuth:
       bearerFormat: JWT
       scheme: bearer
       type: http
-      x-text-ref-description: './bearer-auth.md'
+      x-text-ref-description: '../bearer-auth.md'

@@ -1,18 +1,18 @@
 {
   "name": "pvault-sdk",
   "version": "1.0.0",
+  "module": "dist/index.d.ts",
   "main": "dist/index.js",
+  "types": "dist/index.d.ts",
   "license": "MIT",
   "scripts": {
-    "build": "tsc -p .",
+    "prepare": "npm run build",
+    "clean": "rm -rf lib",
+    "build": "tsc",
     "start:dev": "yarn build -- -w",
-    "generate": "rm -rf ./generated && openapi --input ./openapi.yaml --output ./generated -c axios",
+    "generate": "rm -rf ./generated && openapi --input ./openapi.yaml --output ./src/generated -c axios",
     "test": "mocha -c -r ts-node/register test/*.spec.ts"
   },
-  "types": "dist/index.d.ts",
-  "files": [
-    "/dist"
-  ],
   "dependencies": {
     "openapi-typescript-codegen": "^0.23.0"
   },

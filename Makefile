@@ -5,8 +5,11 @@ MONGO_PASS			?= pass
 PVAULT_DOCKER_NAME	:= pvault-dev
 MONGO_DOCKER_NAME	:= mongo
 
-APP_DIR				:= ./app
+PVAULT_DOCKER_TAG	?= piiano/pvault-dev:0.9.7-poc-221012
+
+APP_DIR				:= ./demo_app
 SDK_DIR				:= ./pvault-sdk
+LIB_DIR				:= ./typeorm-pvault
 
 ###### MONGO ######
 .PHONY: mongo-run
@@ -28,24 +31,58 @@ pvault-run: pvault-stop
 			   -e PVAULT_SENTRY_ENABLE=false \
 			   -e PVAULT_SERVICE_LICENSE=$(PVAULT_SERVICE_LICENSE) \
 			   -e PVAULT_DEVMODE=1 \
+			   -p 8123:8123 \
+			   -p 5432:5432 \
 			   --name $(PVAULT_DOCKER_NAME) \
-			   piiano/pvault-dev:0.9.5
+			   $(PVAULT_DOCKER_TAG)
+	
+	sleep 3
+	docker exec -i pvault-dev pvault collection add --collection-pvschema " \
+		users PERSONS ( 	\
+			email EMAIL,	\
+			ssn SSN NULL,	\
+		)"
 
 .PHONY: pvault-stop
 pvault-stop:
 	docker rm -f $(PVAULT_DOCKER_NAME)
 
 ###### APP ######
+.PHONY: prepare-sdk
+prepare-sdk: $(SDK_DIR)/dist/index.js
+
+$(SDK_DIR)/dist/index.js: $(SDK_DIR)/package.json $(SDK_DIR)/openapi.yaml
+	yarn --cwd $(SDK_DIR)
+
+.PHONY: prepare-lib
+prepare-lib: prepare-sdk $(LIB_DIR)/dist/index.js
+
+$(LIB_DIR)/dist/index.js: $(LIB_DIR)/package.json
+	yarn --cwd $(LIB_DIR)
+
+.PHONY: prepare-app
+prepare-app: prepare-lib $(APP_DIR)/dist/ormconfig.js
+
+$(APP_DIR)/dist/ormconfig.js: $(APP_DIR)/package.json
+	yarn --cwd $(APP_DIR)
+	yarn --cwd $(APP_DIR) build
+
+.PHONY: prepare
+prepare: prepare-app
+
 .PHONY: app-run
-app-run: mongo-run pvault-run
+app-run: prepare mongo-run pvault-run
 	yarn --cwd $(APP_DIR) start:dev
 
+.PHONY: app-test
+app-test: prepare
+	yarn --cwd $(APP_DIR) test
 
 ###### SDK TYPESCRIPT ######
 IN_DOCKER_PWD	:= /local
 OPENAPI_YAML	:= $(SDK_DIR)/openapi.yaml
 
-$(SDK_DIR)/generated/index.ts:
+$(SDK_DIR)/generated/index.ts: $(OPENAPI_YAML)
 	yarn --cwd $(SDK_DIR) generate
 
 .PHONY: generate-sdk-ts

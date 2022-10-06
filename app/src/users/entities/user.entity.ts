@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Exclude, Expose, plainToClass, Type } from 'class-transformer';
-import { IsDefined, IsEmail, IsUUID } from 'class-validator';
+import { IsDefined, IsEmail, IsString, IsUUID } from 'class-validator';
 import {
   Column,
   Entity,
@@ -19,11 +19,36 @@ export class User {
   @ApiProperty({ type: String })
   @Column()
   @IsDefined()
+  @IsString()
+  readonly username: string;
+
+  @ApiProperty({ type: String })
+  @Column()
+  @IsDefined()
+  @IsString()
+  readonly password: string;
+
+  @ApiProperty({ type: String })
+  @Column()
+  @IsDefined()
+  @IsString()
+  readonly firstName: string;
+
+  @ApiProperty({ type: String })
+  @Column()
+  @IsDefined()
+  @IsString()
+  readonly lastName: string;
+
+  @ApiProperty({ type: String })
+  @Column()
+  @IsDefined()
   @IsEmail()
   readonly email: string;
 
   @ApiProperty({ type: String })
   @Column()
   @IsDefined()
+  @IsString()
   readonly country: string;
 }

@@ -18,11 +18,11 @@ This repo contains the following projects:
 
 2. `typeorm-vault` - Typescript library with helper functions to simplify the integration between TypeORM and Vault.
    
-3. `demo_app` - NestJS/TypeORM/Mongo project that shows how `typeorm-vault` can be integrated in order to protect certain entity properties. It consists of two modules:
-    * [users](/demo_app/src/users/) - A module with any Piiano Vault interaction.
-    * [users-protected](/demo_app/src/users-protected/) - The same API, with one property protected in Vault.
+3. `demo-app` - NestJS/TypeORM/Mongo project that shows how `typeorm-vault` can be integrated in order to protect certain entity properties. It consists of two modules:
+    * [users](/demo-app/src/users/) - A module with any Piiano Vault interaction.
+    * [users-protected](/demo-app/src/users-protected/) - The same API, with one property protected in Vault.
   
-    See [demo_app](/demo_app) for more details.
+    See [demo-app](/demo-app) for more details.
 
     :construction: This project is work in progress 
 
@@ -30,7 +30,7 @@ This repo contains the following projects:
 
 Vault exposes REST API so you can integrate with it in anyway your are usually dealing with REST APIs. To ease the integration, we recommend using `typeorm-pvault`.
 
-Full example is at [demo_app](/demo_app/src/users-protected/).
+Full example is at [demo-app](/demo-app/src/users-protected/).
 
 You will need to initialize 
 

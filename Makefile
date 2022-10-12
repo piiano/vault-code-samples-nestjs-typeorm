@@ -7,7 +7,7 @@ MONGO_DOCKER_NAME	:= mongo
 
 PVAULT_DOCKER_TAG	?= piiano/pvault-dev:0.9.7-poc-221012
 
-APP_DIR				:= ./demo_app
+APP_DIR				:= ./demo-app
 SDK_DIR				:= ./pvault-sdk
 LIB_DIR				:= ./typeorm-pvault
 

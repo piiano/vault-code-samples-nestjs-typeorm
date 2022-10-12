@@ -18,8 +18,8 @@ Note: This is not a production ready application, but a showcase and code exampl
 * Build the application:
    1. Build the SDK: `yarn --cwd pvault-sdk`
    2. Build the library: `yarn --cwd typeorm-pvault`
-   3. Prepare the demo app: `yarn --cwd demo_app`
-   4. Build the demo app: `yarn --cwd demo_app build`
+   3. Prepare the demo app: `yarn --cwd demo-app`
+   4. Build the demo app: `yarn --cwd demo-app build`
 
 * Start MongoDB:
    ```bash
@@ -28,7 +28,7 @@ Note: This is not a production ready application, but a showcase and code exampl
 		-e MONGO_INITDB_ROOT_PASSWORD=pass \
 		mongo
     ```
-    The parameters themselves for the post, username and password should be in sync with [ormconfig.ts](/demo_app/ormconfig.ts)
+    The parameters themselves for the post, username and password should be in sync with [ormconfig.ts](/demo-app/ormconfig.ts)
 
 * Start Piiano Vault:
   Install Piiano Vault - step 1 & 2 on [get-started](https://piiano.com/docs/guides/get-started), and create a collection for user's emails:
@@ -40,4 +40,4 @@ Note: This is not a production ready application, but a showcase and code exampl
       )"
     ```
 
-* Run the appication: `cd demo_app && yarn start:dev`.
+* Run the appication: `cd demo-app && yarn start:dev`.

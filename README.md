@@ -1,5 +1,19 @@
 # Vault NestJS/TypeORM Code Samples
 
+## Background
+Piiano Vault is the secure home for sensitive personal data. It allows you to safely store sensitive personal data in your own cloud environment with
+automated compliance controls.
+Vault is deployed within your own architecture, next to other DBs used by the applications, and should be used to store the most critical sensitive personal data, such as credit cards and bank account numbers, names, emails, national IDs (e.g. SSN), phone numbers, etc.
+The main benefits are:
+- Field level encryption, including key rotation.
+- Searchability is allowed over the encrypted data.
+- Full audit log for all data accesses.
+- Granular access controls.
+- Easy masking and tokenization of data.
+- Out of the box privacy compliance functionality.
+
+More details can be found [on our website](https://piiano.com/pii-data-privacy-vault/) and on the [developers portal](https://piiano.com/docs/).
+
 ## Installation
 
 Requirements: [Docker](https://docs.docker.com/get-docker/), [yarn](https://github.com/yarnpkg/yarn)
@@ -8,7 +22,7 @@ Requirements: [Docker](https://docs.docker.com/get-docker/), [yarn](https://gith
 
 `make app-test` - Test the high-level functionality of the CRUD as integrated with Piiano Vault.
 
-`make generate-sdk-ts` - Re-generate the Typescript SDK from the [openapi.yaml](/pvault-sdk/openapi.yaml) file.
+`make generate-sdk-ts` - The generated code is already committed in this repository. Use this option to re-generate the Typescript SDK from the [openapi.yaml](/pvault-sdk/openapi.yaml) file.
 
 ## Foldet structure
 
@@ -19,7 +33,7 @@ This repo contains the following projects:
 2. `typeorm-vault` - Typescript library with helper functions to simplify the integration between TypeORM and Vault.
    
 3. `demo-app` - NestJS/TypeORM/Mongo project that shows how `typeorm-vault` can be integrated in order to protect certain entity properties. It consists of two modules:
-    * [users](/demo-app/src/users/) - A module with any Piiano Vault interaction.
+    * [users](/demo-app/src/users/) - A module without any Piiano Vault interaction.
     * [users-protected](/demo-app/src/users-protected/) - The same API, with one property protected in Vault.
   
     See [demo-app](/demo-app) for more details.

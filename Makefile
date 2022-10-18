@@ -70,12 +70,15 @@ $(APP_DIR)/dist/ormconfig.js: $(APP_DIR)/package.json
 .PHONY: prepare
 prepare: prepare-app
 
+.PHONY: stop-prereq
+stop-prereq: pvault-stop mongo-stop
+
 .PHONY: app-run
 app-run: prepare mongo-run pvault-run
 	yarn --cwd $(APP_DIR) start:dev
 
 .PHONY: app-test
-app-test: prepare
+app-test: prepare stop-prereq
 	yarn --cwd $(APP_DIR) test
 
 ###### SDK TYPESCRIPT ######

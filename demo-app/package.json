@@ -14,7 +14,11 @@
     "start:debug": "nest start --debug --watch",
     "start:prod": "node dist/main",
     "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
-    "test": "mocha -c -r ts-node/register src/**/*.spec.ts"
+    "test": "mocha -c -r ts-node/register src/**/*.spec.ts",
+    "typeorm": "ts-node -r tsconfig-paths/register ./node_modules/typeorm/cli",
+    "migration:create": "ts-node -r tsconfig-paths/register ./node_modules/typeorm/cli migration:create -d migrations -n to_vault",
+    "migration:run": "npm run build && ts-node -r tsconfig-paths/register ./node_modules/typeorm/cli migration:run",
+    "migration:revert": "ts-node -r tsconfig-paths/register ./node_modules/typeorm/cli migration:revert"
   },
   "dependencies": {
     "@nestjs/common": "^9.0.0",

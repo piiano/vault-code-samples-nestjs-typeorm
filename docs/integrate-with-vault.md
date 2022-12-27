@@ -50,7 +50,7 @@ await this.PvaultService.updateForeignId(
 ```
 
 ### Get by ID
-After integrating with Vault, the DB of the application stores the protected values of the relevant properties. Tou can use wrap the Repository instance to a Vault-aware Repository that will automatically detokenize the entity and return the original values.
+After integrating with Vault, the DB of the application stores the protected values of the relevant properties. You can wrap the Repository instance to a Vault-aware Repository that will automatically detokenize the entity and return the original values.
 
 ```ts
 this.PvaultService.safeRepository(this.userRepository).findOne(id);

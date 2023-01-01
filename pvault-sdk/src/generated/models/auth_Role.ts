@@ -3,7 +3,7 @@
 /* eslint-disable */
 
 export type auth_Role = {
-    capabilities?: Array<string>;
-    policies?: Array<string>;
+    capabilities: Array<string>;
+    policies: Array<string>;
 };
 

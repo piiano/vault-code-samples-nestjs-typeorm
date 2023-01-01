@@ -130,7 +130,7 @@ describe("Pvault", function () {
     await PvaultService.insertAndPrepareEntity(newUser);
 
     // Make sure it is stored on Vault as well.
-    let listOfVaultObjs = await sdk.ObjectsService.getObjects(
+    let listOfVaultObjs = await sdk.ObjectsService.listObjects(
       collection,
       "AppFunctionality",
       undefined,
@@ -150,7 +150,7 @@ describe("Pvault", function () {
     await PvaultService.removeForeignId(foreignId);
 
     // Make sure it's deleted from Vault.
-    listOfVaultObjs = await sdk.ObjectsService.getObjects(
+    listOfVaultObjs = await sdk.ObjectsService.listObjects(
       collection,
       "AppFunctionality",
       undefined,

@@ -1,8 +1,8 @@
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
-import type { models_ConfVar } from '../models/models_ConfVar';
-import type { models_ConfVarValue } from '../models/models_ConfVarValue';
+import type { ConfVar } from '../models/ConfVar';
+import type { ConfVarValue } from '../models/ConfVarValue';
 
 import type { CancelablePromise } from '../core/CancelablePromise';
 import { OpenAPI } from '../core/OpenAPI';
@@ -12,6 +12,11 @@ export class ConfigVarsService {
 
     /**
      * Clear configuration variables
+     * Clears all dynamic configuration variables.
+     *
+     * The role performing this operation must have the `CapConfvarWriter` capability.
+     * See [Access control](/data-security/identity-and-access-management#access-control) for more information about how
+     * capabilities are used to control access to operations.
      * @returns any The request is successful.
      * @throws ApiError
      */
@@ -24,7 +29,8 @@ export class ConfigVarsService {
                 401: `Authentication credentials are incorrect or missing.`,
                 403: `The caller doesn't have the required access rights.`,
                 404: `The requested resource is not found.`,
-                500: `An error occurred on the server.`,
+                409: `A conflict occurs.`,
+                500: `An error occurs on the server.`,
                 503: `The service is unavailable.`,
             },
         });
@@ -32,13 +38,20 @@ export class ConfigVarsService {
 
     /**
      * Get configuration variable
+     * Gets a dynamic configuration variable by name. The names of the variables that may be obtained are:
+     *
+     * - `log_level`
+     *
+     * The role that performs this operation must have the `CapConfvarReader` capability.
+     * See [Access control](/data-security/identity-and-access-management#access-control) for more information about how
+     * capabilities are used to control access to operations.
      * @param name The name of the configuration variable.
-     * @returns models_ConfVar The request is successful.
+     * @returns ConfVar The request is successful.
      * @throws ApiError
      */
     public static getConfVar(
         name: string,
-    ): CancelablePromise<models_ConfVar> {
+    ): CancelablePromise<ConfVar> {
         return __request(OpenAPI, {
             method: 'GET',
             url: '/api/pvlt/1.0/system/confvar/{name}',
@@ -50,7 +63,8 @@ export class ConfigVarsService {
                 401: `Authentication credentials are incorrect or missing.`,
                 403: `The caller doesn't have the required access rights.`,
                 404: `The requested resource is not found.`,
-                500: `An error occurred on the server.`,
+                409: `A conflict occurs.`,
+                500: `An error occurs on the server.`,
                 503: `The service is unavailable.`,
             },
         });
@@ -58,6 +72,13 @@ export class ConfigVarsService {
 
     /**
      * Set configuration variable
+     * Sets a dynamic configuration variable by name. The names of the variables that may be set are:
+     *
+     * - `log_level` which can take the values of `debug`, `info`, `warn`, and `error`.
+     *
+     * The role that performs this operation must have the `CapConfvarWriter` capability.
+     * See [Access control](/data-security/identity-and-access-management#access-control) for more information about how
+     * capabilities are used to control access to operations.
      * @param name The name of the configuration variable.
      * @param requestBody Value of the configuration.
      * @returns any The request is successful.
@@ -65,7 +86,7 @@ export class ConfigVarsService {
      */
     public static setConfVar(
         name: string,
-        requestBody: models_ConfVarValue,
+        requestBody: ConfVarValue,
     ): CancelablePromise<any> {
         return __request(OpenAPI, {
             method: 'POST',
@@ -80,7 +101,8 @@ export class ConfigVarsService {
                 401: `Authentication credentials are incorrect or missing.`,
                 403: `The caller doesn't have the required access rights.`,
                 404: `The requested resource is not found.`,
-                500: `An error occurred on the server.`,
+                409: `A conflict occurs.`,
+                500: `An error occurs on the server.`,
                 503: `The service is unavailable.`,
             },
         });

@@ -89,7 +89,7 @@ export class PvaultWp<Entity extends ObjectLiteral> {
         props: [propertyName],
         reversible: true,
         reuse_token_id: true,
-        type: sdk.models_TokenizeRequest.type.VALUE,
+        type: sdk.TokenizeRequest.type.VALUE,
       });
 
       curEntity[propertyName] = token[0].token_id;
@@ -129,7 +129,7 @@ export class PvaultWp<Entity extends ObjectLiteral> {
         props: [propertyName],
         reversible: true,
         reuse_token_id: true,
-        type: sdk.models_TokenizeRequest.type.VALUE,
+        type: sdk.TokenizeRequest.type.VALUE,
       });
 
       curEntity[propertyName] = token[0].token_id;
@@ -174,7 +174,9 @@ export class PvaultWp<Entity extends ObjectLiteral> {
       null,
       null,
       null,
-      props || ["_id"]
+      null,
+      props || ["_id"],
+
     );
 
     const result = vaultObj?.results[0];
@@ -203,7 +205,7 @@ export class PvaultWp<Entity extends ObjectLiteral> {
       reason,
       {
         _foreign_id: id,
-      } as sdk.models_Object
+      } as sdk.Object
     );
   }
 
@@ -228,7 +230,7 @@ export class PvaultWp<Entity extends ObjectLiteral> {
       props: [propName],
       reversible: true,
       reuse_token_id: true,
-      type: sdk.models_TokenizeRequest.type.VALUE,
+      type: sdk.TokenizeRequest.type.VALUE,
     });
 
     if (token.length == 0) {

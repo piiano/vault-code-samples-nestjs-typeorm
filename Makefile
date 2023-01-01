@@ -5,7 +5,7 @@ MONGO_PASS			?= pass
 PVAULT_DOCKER_NAME	:= pvault-dev
 MONGO_DOCKER_NAME	:= mongo
 
-PVAULT_DOCKER_TAG	?= piiano/pvault-dev:0.9.7-poc-221012
+PVAULT_DOCKER_TAG	?= piiano/pvault-dev:latest
 
 APP_DIR				:= ./demo-app
 SDK_DIR				:= ./pvault-sdk
@@ -36,7 +36,7 @@ pvault-run: pvault-stop
 			   --name $(PVAULT_DOCKER_NAME) \
 			   $(PVAULT_DOCKER_TAG)
 	
-	sleep 3
+	sleep 6
 	docker exec -i pvault-dev pvault collection add --collection-pvschema " \
 		users PERSONS ( 	\
 			email EMAIL,	\
@@ -85,8 +85,12 @@ app-test: prepare stop-prereq
 IN_DOCKER_PWD	:= /local
 OPENAPI_YAML	:= $(SDK_DIR)/openapi.yaml
 
+.PHONY: download_openapi_file
+download_openapi_file:
+	curl -o $(OPENAPI_YAML) https://piiano.com/docs/assets/openapi.yaml
+
 $(SDK_DIR)/generated/index.ts: $(OPENAPI_YAML)
 	yarn --cwd $(SDK_DIR) generate
 
 .PHONY: generate-sdk-ts
-generate-sdk-ts: $(SDK_DIR)/generated/index.ts
+generate-sdk-ts: download_openapi_file $(SDK_DIR)/generated/index.ts

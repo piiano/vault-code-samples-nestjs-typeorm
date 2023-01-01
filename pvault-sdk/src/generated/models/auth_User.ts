@@ -3,7 +3,7 @@
 /* eslint-disable */
 
 export type auth_User = {
-    disabled?: boolean;
-    role?: string;
+    disabled: boolean;
+    role: string;
 };
 

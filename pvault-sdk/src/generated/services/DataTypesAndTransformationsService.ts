@@ -1,8 +1,8 @@
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
-import type { models_TransformationDoc } from '../models/models_TransformationDoc';
-import type { piitype_PIIType } from '../models/piitype_PIIType';
+import type { PIIType } from '../models/PIIType';
+import type { Transformation } from '../models/Transformation';
 
 import type { CancelablePromise } from '../core/CancelablePromise';
 import { OpenAPI } from '../core/OpenAPI';
@@ -12,10 +12,15 @@ export class DataTypesAndTransformationsService {
 
     /**
      * List transformations
-     * @returns models_TransformationDoc The request is successful.
+     * Lists the transformations in a collection. See Manage transformations for more information.
+     *
+     * The role that performs this operation must have the `CapSchemaReader` capability.
+     * See [Access control](/data-security/identity-and-access-management#access-control) for more information about how
+     * capabilities are used to control access to operations.
+     * @returns Transformation The request is successful.
      * @throws ApiError
      */
-    public static listTransformations(): CancelablePromise<Array<models_TransformationDoc>> {
+    public static listTransformations(): CancelablePromise<Array<Transformation>> {
         return __request(OpenAPI, {
             method: 'GET',
             url: '/api/pvlt/1.0/ctl/transformations',
@@ -24,7 +29,8 @@ export class DataTypesAndTransformationsService {
                 401: `Authentication credentials are incorrect or missing.`,
                 403: `The caller doesn't have the required access rights.`,
                 404: `The requested resource is not found.`,
-                500: `An error occurred on the server.`,
+                409: `A conflict occurs.`,
+                500: `An error occurs on the server.`,
                 503: `The service is unavailable.`,
             },
         });
@@ -32,10 +38,17 @@ export class DataTypesAndTransformationsService {
 
     /**
      * List property types
-     * @returns piitype_PIIType The request is successful.
+     * Lists the Vault property types.
+     *
+     * See Data types for more information.
+     *
+     * The role that performs this operation must have the `CapSchemaReader` capability.
+     * See [Access control](/data-security/identity-and-access-management#access-control) for more information about how
+     * capabilities are used to control access to operations.
+     * @returns PIIType The request is successful.
      * @throws ApiError
      */
-    public static listPropertyTypes(): CancelablePromise<Array<piitype_PIIType>> {
+    public static listDataTypes(): CancelablePromise<Array<PIIType>> {
         return __request(OpenAPI, {
             method: 'GET',
             url: '/api/pvlt/1.0/ctl/types',
@@ -44,7 +57,8 @@ export class DataTypesAndTransformationsService {
                 401: `Authentication credentials are incorrect or missing.`,
                 403: `The caller doesn't have the required access rights.`,
                 404: `The requested resource is not found.`,
-                500: `An error occurred on the server.`,
+                409: `A conflict occurs.`,
+                500: `An error occurs on the server.`,
                 503: `The service is unavailable.`,
             },
         });

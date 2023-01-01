@@ -77,7 +77,7 @@ describe("Pvault", function () {
     -e PVAULT_DEVMODE=true \
     -e PVAULT_SERVICE_LICENSE=${process.env.PVAULT_SERVICE_LICENSE} \
     -d \
-    piiano/pvault-dev:0.9.6`
+    piiano/pvault-dev:1.0.2`
     );
     await utils.run(`sleep 5`);
 

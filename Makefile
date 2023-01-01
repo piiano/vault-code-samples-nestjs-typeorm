@@ -5,7 +5,7 @@ MONGO_PASS			?= pass
 PVAULT_DOCKER_NAME	:= pvault-dev
 MONGO_DOCKER_NAME	:= mongo
 
-PVAULT_DOCKER_TAG	?= piiano/pvault-dev:latest
+PVAULT_DOCKER_TAG	?= piiano/pvault-dev:1.0.2
 
 APP_DIR				:= ./demo-app
 SDK_DIR				:= ./pvault-sdk
@@ -74,11 +74,11 @@ prepare: prepare-app
 stop-prereq: pvault-stop mongo-stop
 
 .PHONY: app-run
-app-run: prepare mongo-run pvault-run
+app-run: prepare mongo-run generate-sdk-ts pvault-run
 	yarn --cwd $(APP_DIR) start:dev
 
 .PHONY: app-test
-app-test: prepare stop-prereq
+app-test: generate-sdk-ts prepare stop-prereq
 	yarn --cwd $(APP_DIR) test
 
 ###### SDK TYPESCRIPT ######

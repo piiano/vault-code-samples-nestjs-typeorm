@@ -2,12 +2,12 @@ import { describe, it } from "mocha";
 import { expect } from "chai";
 import {
   CollectionsService,
-  models_Collection,
-  models_TokenizeRequest,
+  Collection,
+  TokenizeRequest,
   ObjectsService,
   TokensService,
   OpenAPI,
-  models_Object,
+  Object,
 } from "../src";
 
 const reason = "AppFunctionality";
@@ -18,22 +18,20 @@ describe("Sanity", function () {
 
   it("sanity roundtrip", async function () {
     // Create collection.
-    const coll = await CollectionsService.addCollection(reason, {
+    const coll = await CollectionsService.addCollection( {
       name: "pp5",
-      type: models_Collection.type.PERSONS,
+      type: Collection.type.PERSONS,
       properties: [
         {
           name: "email",
-          pii_type_name: "EMAIL",
-          is_array: false,
+          pii_type_name: "EMAIL"
         },
         {
           name: "name",
-          pii_type_name: "NAME",
-          is_array: false,
+          pii_type_name: "NAME"
         },
       ],
-    });
+    }, "json");
 
     // const coll: any = {
     //   name: "pp5",
@@ -47,14 +45,14 @@ describe("Sanity", function () {
     const obj: any = await ObjectsService.addObject(
       coll.name,
       reason,
-      objInput as models_Object
+      objInput as Object
     );
     // Tokenize.
     const token = await TokensService.tokenize(coll.name, reason, {
-      object_ids: [obj._id || ""],
+      object_ids: [obj.id || ""],
       props: ["email"],
       reversible: true,
-      type: models_TokenizeRequest.type.VALUE,
+      type: TokenizeRequest.type.VALUE,
     });
     // Detokenize.
     const detokenized = await TokensService.detokenize(

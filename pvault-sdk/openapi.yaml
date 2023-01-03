@@ -1,6 +1,35 @@
 openapi: 3.0.3
 info:
-  x-text-ref-description: '../overview.md'
+  description: >
+    ---
+
+    sidebar_position: 1
+
+    sidebar_label: Overview
+
+    description: The Piiano Vault REST API enables you to access and manage collections, objects, tokens, users, policies, and other resources within Piiano Vault.
+
+    slug: /
+
+    ---
+
+
+    # Introduction
+
+
+    The Piiano Vault REST API enables you to access and manage collections, objects, tokens, users, policies, and other resources within Piiano Vault in a simple, programmatic way using conventional HTTP requests and standard HTTP response codes.
+
+
+    The API follows RESTful conventions when possible, with most operations performed by `GET`, `POST`, `PUT`, `PATCH`, and `DELETE` requests. Request and response bodies are [JSON-encoded](https://www.json.org/json-en.html). However, for collection operations, an SQL-like [PVSchema](/guides/manage-collections-and-schemas/reference/pvschema) encoding is available.
+
+
+    This API reference provides details for each operation available in the API.
+
+
+    When you install a local copy of Vault, you can try each operation using **Send API request**.
+
+
+    An OpenAPI specification is available in [YAML](@site/static/assets/openapi.yaml) and [JSON](@site/static/assets/openapi.json) formats and can be used to generate client code for the API.
   contact:
     name: Us
     url: https://piiano.com/contact-us/
@@ -8,38 +37,64 @@ info:
     name: MPL 2.0
     url: https://www.mozilla.org/en-US/MPL/2.0/
   title: Piiano Vault REST API
-  version: '1.0'
-
+  version: "1.0"
 servers:
   - url: http://localhost:8123
-
 tags:
-  - description: The collection endpoints allow you to create, retrieve and update collections.
+  - description: This Piiano Vault REST API resource enables you to create,
+      retrieve, update, and delete the collections that hold sensitive data.
     name: Collections
-  - description: The Property types and transformations endpoints allow you to list available types and transformations for properties.
+  - description: This Piiano Vault REST API resource enables you to create,
+      retrieve, list, update, and delete the collection properties that define
+      the stored data values.
+    name: Collection properties
+  - description: This Piiano Vault REST API resource enables you to list collection
+      property data types and property transformations.
     name: Data types and transformations
-  - description: The object endpoints allow you to add, retrieve and update objects.
+  - description: This Piiano Vault REST API resource enables you to create,
+      retrieve, search, update, and delete collection objects and their data.
     name: Objects
-  - description: The token endpoints allow you to tokenize, detokenize, update and delete tokens.
+  - description: This Piiano Vault REST API resource enables you to tokenize,
+      detokenize, update, rotate, search, and delete tokens.
     name: Tokens
-  - description: The IAM (identity and access management) endpoints allow you to set and retrieve IAM configuration, and to regenerate user API keys.
+  - description: This Piiano Vault REST API resource enables you to set and retrieve
+      the IAM configuration and regenerate user API keys.
     name: IAM
-  - description: The config vars endpoints allow you to set and retrieve dynamic configuration variables.
+  - description: This Piiano Vault REST API resource enables you to set and retrieve
+      the dynamic configuration variables that can tcontrol the behavior of your
+      Vault.
     name: Config Vars
-  - description: The system endpoint allow you to retrieve system components status and Vault version.
+  - description: This Piiano Vault REST API resource enables you to retrieve details
+      about the status of system components and the Vault version.
     name: System
-
 paths:
   /api/pvlt/1.0/ctl/collections:
     get:
-      operationId: get-all-collections
+      operationId: list-collections
       summary: List collections
-      x-text-ref-description: './control/GetAllCollections.md'
+      description: >
+        Lists all collections.
+
+
+        The collections can be returned in JSON or PVSchema format using the `format` query parameter or by setting the `Accept` header to `application/json` or `application/pvschema`, respectively. The default is to return JSON.
+
+
+        See [PVSchema](/guides/manage-collections-and-schemas/reference/pvschema) for more details on the structure and content of PVSchema.
+
+
+        The PVSchema format for multiple collections is the PVSchema for each collection string concatenated with a newline.
+
+
+        The role that performs this operation must have the `CapCollectionsReader` capability.
+
+        See [Access control](/data-security/identity-and-access-management#access-control) for more information about how
+
+        capabilities are used to control access to operations.
       parameters:
-        - $ref: '#/components/parameters/jsonOrPvSchemaFormat'
+        - $ref: "#/components/parameters/jsonOrPvSchemaFormat"
         - description: |
             Options for the operation. Options include:
-            - `show_builtins` – show built-in properties from response.
+            - `show_builtins` – show built-in properties in the response.
           in: query
           name: options
           schema:
@@ -49,29 +104,39 @@ paths:
               type: string
             type: array
       responses:
-        200:
+        "200":
           description: The request is successful.
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/models.Collection'
+                  $ref: "#/components/schemas/Collection"
             application/pvschema:
               schema:
-                type: string
-        400:
-          $ref: '#/components/responses/400'
-        401:
-          $ref: '#/components/responses/401'
-        403:
-          $ref: '#/components/responses/403'
-        404:
-          $ref: '#/components/responses/404'
-        500:
-          $ref: '#/components/responses/500'
-        503:
-          $ref: '#/components/responses/503'
+                $ref: "#/components/schemas/Collection.pvschema"
+        "400":
+          $ref: "#/components/responses/400"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+        "404":
+          description: Reserved for future use.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/rest.HTTPError"
+              example:
+                error_code: PV1004
+                message: The collection is not found.
+                context: {}
+        "409":
+          $ref: "#/components/responses/409"
+        "500":
+          $ref: "#/components/responses/500"
+        "503":
+          $ref: "#/components/responses/503"
       security:
         - bearerAuth: []
       tags:
@@ -80,12 +145,25 @@ paths:
     post:
       operationId: add-collection
       summary: Add collection
-      x-text-ref-description: './control/AddCollection.md'
+      description: >-
+        Adds a collection.
+
+
+        The collection request can be provided in JSON or PVSchema format by setting the `Content-Type` header to `application/json` or `application/pvschema`, respectively. The collection can be returned in JSON or PVSchema format using the `format` query parameter or by setting the `Accept` header to `application/json` or `application/pvschema`, respectively. The default is to return JSON.
+
+
+        See [PVSchema](/guides/manage-collections-and-schemas/reference/pvschema) for more details on the structure and content of PVSchema.
+
+
+        Invalid optional `properties` attributes in a JSON request are ignored.
+
+
+        The role performing this operation must have the `CapCollectionsWriter` capability. See [Access control](/data-security/identity-and-access-management#access-control) for more information about how capabilities are used to control access to operations.
       parameters:
-        - $ref: '#/components/parameters/jsonOrPvSchemaFormat'
+        - $ref: "#/components/parameters/jsonOrPvSchemaFormat"
         - description: |
             Options for the operation. Options include:
-            - `show_builtins` – show built-in properties from response.
+            - `show_builtins` – show built-in properties in the response.
           in: query
           name: options
           schema:
@@ -99,715 +177,73 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/models.Collection'
+              $ref: "#/components/schemas/Collection"
           application/pvschema:
             schema:
-              type: string
+              $ref: "#/components/schemas/Collection.pvschema"
         description: Details of the collection including its properties.
         required: true
         x-originalParamName: collection
       responses:
-        200:
+        "200":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/models.Collection'
+                $ref: "#/components/schemas/Collection"
             application/pvschema:
               schema:
                 type: string
+                $ref: "#/components/schemas/Collection.pvschema"
           description: The request is successful.
-        400:
-          $ref: '#/components/responses/400'
-        401:
-          $ref: '#/components/responses/401'
-        403:
-          $ref: '#/components/responses/403'
-        404:
-          $ref: '#/components/responses/404'
-        500:
-          $ref: '#/components/responses/500'
-        503:
-          $ref: '#/components/responses/503'
+        "400":
+          $ref: "#/components/responses/400"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+        "404":
+          description: Reserved for future use.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/rest.HTTPError"
+              example:
+                error_code: PV1004
+                message: The collection is not found.
+                context: {}
+        "409":
+          $ref: "#/components/responses/409"
+        "500":
+          $ref: "#/components/responses/500"
+        "503":
+          $ref: "#/components/responses/503"
       security:
         - bearerAuth: []
       tags:
         - Collections
       x-docs-sidebar-precedence: 3
-  /api/pvlt/1.0/ctl/collections/{collection}:
-    delete:
-      operationId: delete-collection
-      summary: Delete collection
-      x-text-ref-description: './control/DeleteCollection.md'
-      parameters:
-        - $ref: '#/components/parameters/collection'
-      responses:
-        200:
-          description: The request is successful.
-        400:
-          $ref: '#/components/responses/400'
-        401:
-          $ref: '#/components/responses/401'
-        403:
-          $ref: '#/components/responses/403'
-        404:
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/rest.HTTPError'
-          description: The collection is not found.
-        500:
-          $ref: '#/components/responses/500'
-        503:
-          $ref: '#/components/responses/503'
-      security:
-        - bearerAuth: []
-      tags:
-        - Collections
-      x-docs-sidebar-precedence: 5
+  "/api/pvlt/1.0/data/collections/{collection}/objects":
     get:
-      operationId: get-collection
-      summary: Get collection details
-      x-text-ref-description: './control/GetCollection.md'
-      parameters:
-        - $ref: '#/components/parameters/collection'
-        - $ref: '#/components/parameters/jsonOrPvSchemaFormat'
-        - description: |
-            Options for the operation. Options include:
-            - `show_builtins` – show built-in properties from response.
-          in: query
-          name: options
-          schema:
-            items:
-              enum:
-                - show_builtins
-              type: string
-            type: array
-      responses:
-        200:
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/models.Collection'
-            application/pvschema:
-              schema:
-                type: string
-          description: The request is successful.
-        400:
-          $ref: '#/components/responses/400'
-        401:
-          $ref: '#/components/responses/401'
-        403:
-          $ref: '#/components/responses/403'
-        404:
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/rest.HTTPError'
-          description: The collection isn't found.
-        500:
-          $ref: '#/components/responses/500'
-        503:
-          $ref: '#/components/responses/503'
-      security:
-        - bearerAuth: []
-      tags:
-        - Collections
-      x-docs-sidebar-precedence: 2
-    patch:
-      operationId: update-collection
-      summary: Update collection details
-      x-text-ref-description: './control/UpdateCollection.md'
-      parameters:
-        - description: The name of the collection to import the properties to.
-          in: path
-          name: collection
-          required: true
-          schema:
-            type: string
-        - $ref: '#/components/parameters/jsonOrPvSchemaFormat'
-        - description: |
-            Options for the operation. Options include:
-            - `show_builtins` – show built-in properties from response.
-          in: query
-          name: options
-          schema:
-            items:
-              enum:
-                - show_builtins
-              type: string
-            type: array
-      requestBody:
-        x-has-pii: false
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/models.Collection'
-          application/pvschema:
-            schema:
-              type: string
-        description: Details of the collection including its properties.
-        required: true
-        x-originalParamName: collectionChanges
-      responses:
-        200:
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/models.Collection'
-            application/pvschema:
-              schema:
-                type: string
-          description: The request is successful.
-        400:
-          $ref: '#/components/responses/400'
-        401:
-          $ref: '#/components/responses/401'
-        403:
-          $ref: '#/components/responses/403'
-        404:
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/rest.HTTPError'
-          description: The collection isn't found.
-        500:
-          $ref: '#/components/responses/500'
-        501:
-          $ref: '#/components/responses/501'
-        503:
-          $ref: '#/components/responses/503'
-      security:
-        - bearerAuth: []
-      tags:
-        - Collections
-      x-docs-sidebar-precedence: 4
-  /api/pvlt/1.0/ctl/collections/{collection}/properties:
-    get:
-      operationId: list-collection-properties
-      summary: List collection properties
-      x-text-ref-description: './control/ListProperties.md'
-      parameters:
-        - description: The name of the collection containing the properties.
-          in: path
-          name: collection
-          required: true
-          schema:
-            type: string
-        - description: |
-            Options for the operation. Options include: 
-            - `show_builtins` – show built-in properties from response.
-          in: query
-          name: options
-          schema:
-            items:
-              enum:
-                - show_builtins
-              type: string
-            type: array
-      responses:
-        200:
-          content:
-            application/json:
-              schema:
-                items:
-                  $ref: '#/components/schemas/models.Property'
-                type: array
-          description: The request is successful.
-        400:
-          $ref: '#/components/responses/400'
-        401:
-          $ref: '#/components/responses/401'
-        403:
-          $ref: '#/components/responses/403'
-        404:
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/rest.HTTPError'
-          description: The collection isn't found.
-        500:
-          $ref: '#/components/responses/500'
-        503:
-          $ref: '#/components/responses/503'
-      security:
-        - bearerAuth: []
-      tags:
-        - Collections
-      x-docs-sidebar-precedence: 2
-  /api/pvlt/1.0/ctl/collections/{collection}/properties/{property}:
-    delete:
-      operationId: delete-collection-property
-      summary: Delete collection property
-      x-text-ref-description: './control/DeleteProperty.md'
-      parameters:
-        - description: The name of the collection containing the property.
-          in: path
-          name: collection
-          required: true
-          schema:
-            type: string
-        - description: The name of the property.
-          in: path
-          name: property
-          required: true
-          schema:
-            type: string
-      responses:
-        200:
-          description: The request is successful.
-        400:
-          $ref: '#/components/responses/400'
-        401:
-          $ref: '#/components/responses/401'
-        403:
-          $ref: '#/components/responses/403'
-        404:
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/rest.HTTPError'
-          description: The collection or property wasn't found.
-        500:
-          $ref: '#/components/responses/500'
-        503:
-          $ref: '#/components/responses/503'
-      security:
-        - bearerAuth: []
-      tags:
-        - Collections
-      x-docs-sidebar-precedence: 6
-    get:
-      operationId: get-collection-property
-      summary: Get collection property
-      x-text-ref-description: './control/GetProperty.md'
-      parameters:
-        - description: The ID of the collection containing the property.
-          in: path
-          name: collection
-          required: true
-          schema:
-            type: string
-        - description: The name of the property.
-          in: path
-          name: property
-          required: true
-          schema:
-            type: string
-      responses:
-        200:
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/models.Property'
-          description: The request is successful.
-        400:
-          $ref: '#/components/responses/400'
-        401:
-          $ref: '#/components/responses/401'
-        403:
-          $ref: '#/components/responses/403'
-        404:
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/rest.HTTPError'
-          description: The collection or property wasn't found.
-        500:
-          $ref: '#/components/responses/500'
-        503:
-          $ref: '#/components/responses/503'
-      security:
-        - bearerAuth: []
-      tags:
-        - Collections
-      x-docs-sidebar-precedence: 4
-    patch:
-      operationId: update-collection-property
-      summary: Update collection property
-      x-text-ref-description: './control/UpdateProperty.md'
-      parameters:
-        - description: The name of the collection containing the property.
-          in: path
-          name: collection
-          required: true
-          schema:
-            type: string
-        - description: The name of the property.
-          in: path
-          name: property
-          required: true
-          schema:
-            type: string
-      requestBody:
-        x-has-pii: false
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/models.Property'
-        description: property info
-        required: true
-        x-originalParamName: property
-      responses:
-        200:
-          description: Property updated successfully
-        400:
-          $ref: '#/components/responses/400'
-        401:
-          $ref: '#/components/responses/401'
-        403:
-          $ref: '#/components/responses/403'
-        404:
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/rest.HTTPError'
-          description: The collection or property wasn't found.
-        500:
-          $ref: '#/components/responses/500'
-        501:
-          $ref: '#/components/responses/501'
-        503:
-          $ref: '#/components/responses/503'
-      security:
-        - bearerAuth: []
-      tags:
-        - Collections
-      x-docs-sidebar-precedence: 5
-    post:
-      operationId: add-collection-property
-      summary: Add collection property
-      x-text-ref-description: './control/AddProperty.md'
-      parameters:
-        - description: The name of the collection to add the property to.
-          in: path
-          name: collection
-          required: true
-          schema:
-            type: string
-        - description: The name of the property to add.
-          in: path
-          name: property
-          required: true
-          schema:
-            type: string
-      requestBody:
-        x-has-pii: false
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/models.Property'
-        description: Details of the property.
-        required: true
-        x-originalParamName: property
-      responses:
-        200:
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/models.Property'
-          description: The request is successful.
-        400:
-          $ref: '#/components/responses/400'
-        401:
-          $ref: '#/components/responses/401'
-        403:
-          $ref: '#/components/responses/403'
-        404:
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/rest.HTTPError'
-          description: The collection isn't found.
-        500:
-          $ref: '#/components/responses/500'
-        503:
-          $ref: '#/components/responses/503'
-      security:
-        - bearerAuth: []
-      tags:
-        - Collections
-      x-docs-sidebar-precedence: 3
-  /api/pvlt/1.0/ctl/iam/conf:
-    get:
-      operationId: get-iam-conf
-      summary: Get IAM configuration
-      x-text-ref-description: './control/GetIAMConf.md'
-      responses:
-        200:
-          content:
-            application/toml:
-              schema:
-                $ref: '#/components/schemas/auth.Config'
-          description: The request is successful.
-        400:
-          $ref: '#/components/responses/400'
-        401:
-          $ref: '#/components/responses/401'
-        403:
-          $ref: '#/components/responses/403'
-        404:
-          $ref: '#/components/responses/404'
-        500:
-          $ref: '#/components/responses/500'
-        503:
-          $ref: '#/components/responses/503'
-      security:
-        - bearerAuth: []
-      tags:
-        - IAM
-    post:
-      operationId: set-iam-conf
-      summary: Set IAM configuration
-      x-text-ref-description: './control/SetIAMConf.md'
-      requestBody:
-        x-has-pii: false
-        content:
-          application/toml:
-            schema:
-              $ref: '#/components/schemas/auth.Config'
-        description: IAM configuration in TOML format.
-        required: true
-        x-originalParamName: auth_config
-      responses:
-        200:
-          description: The request is successful.
-        400:
-          $ref: '#/components/responses/400'
-        401:
-          $ref: '#/components/responses/401'
-        403:
-          $ref: '#/components/responses/403'
-        404:
-          $ref: '#/components/responses/404'
-        500:
-          $ref: '#/components/responses/500'
-        503:
-          $ref: '#/components/responses/503'
-      security:
-        - bearerAuth: []
-      tags:
-        - IAM
-  /api/pvlt/1.0/ctl/iam/user/regen:
-    post:
-      operationId: regenerate-user-api-key
-      summary: Regenerate user API key
-      x-text-ref-description: './control/RegenerateUserAPIKey.md'
-      requestBody:
-        x-has-pii: false
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/models.UserName'
-        description: The name of the user to regenerate API key for.
-        required: true
-      responses:
-        200:
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/models.APIKey'
-          description: The request is successful.
-        400:
-          $ref: '#/components/responses/400'
-        401:
-          $ref: '#/components/responses/401'
-        403:
-          $ref: '#/components/responses/403'
-        404:
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/rest.HTTPError'
-          description: The user is not found.
-        500:
-          $ref: '#/components/responses/500'
-        503:
-          $ref: '#/components/responses/503'
-      security:
-        - bearerAuth: []
-      tags:
-        - IAM
-  /api/pvlt/1.0/ctl/info/health:
-    get:
-      operationId: control-health
-      summary: Get control service status
-      x-text-ref-description: './control/Health.md'
-      responses:
-        200:
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/models.Health'
-          description: The request is successful.
-        400:
-          $ref: '#/components/responses/400'
-        401:
-          $ref: '#/components/responses/401'
-        403:
-          $ref: '#/components/responses/403'
-        404:
-          $ref: '#/components/responses/404'
-        500:
-          $ref: '#/components/responses/500'
-        503:
-          $ref: '#/components/responses/503'
-      tags:
-        - System
-      x-docs-sidebar-precedence: 9
-  /api/pvlt/1.0/ctl/transformations:
-    get:
-      operationId: list-transformations
-      summary: List transformations
-      x-text-ref-description: './control/ListTransformations.md'
-      responses:
-        200:
-          content:
-            application/json:
-              schema:
-                items:
-                  $ref: '#/components/schemas/models.TransformationDoc'
-                type: array
-          description: The request is successful.
-        400:
-          $ref: '#/components/responses/400'
-        401:
-          $ref: '#/components/responses/401'
-        403:
-          $ref: '#/components/responses/403'
-        404:
-          $ref: '#/components/responses/404'
-        500:
-          $ref: '#/components/responses/500'
-        503:
-          $ref: '#/components/responses/503'
-      security:
-        - bearerAuth: []
-      tags:
-        - Data types and transformations
-      x-docs-sidebar-precedence: 7
-  /api/pvlt/1.0/ctl/types:
-    get:
-      operationId: list-property-types
-      summary: List property types
-      x-text-ref-description: './control/ListPropertyTypes.md'
-      responses:
-        200:
-          content:
-            application/json:
-              schema:
-                items:
-                  $ref: '#/components/schemas/piitype.PIIType'
-                type: array
-          description: The request is successful.
-        400:
-          $ref: '#/components/responses/400'
-        401:
-          $ref: '#/components/responses/401'
-        403:
-          $ref: '#/components/responses/403'
-        404:
-          $ref: '#/components/responses/404'
-        500:
-          $ref: '#/components/responses/500'
-        503:
-          $ref: '#/components/responses/503'
-      security:
-        - bearerAuth: []
-      tags:
-        - Data types and transformations
-      x-docs-sidebar-precedence: 8
-  /api/pvlt/1.0/ctl/info/cluster:
-    get:
-      operationId: get-cluster-info
-      summary: Get cluster information
-      x-text-ref-description: './control/GetClusterInfo.md'
-      responses:
-        200:
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/models.AllGenerations'
-          description: The request is successful.
-        400:
-          $ref: '#/components/responses/400'
-        401:
-          $ref: '#/components/responses/401'
-        403:
-          $ref: '#/components/responses/403'
-        404:
-          $ref: '#/components/responses/404'
-        500:
-          $ref: '#/components/responses/500'
-        503:
-          $ref: '#/components/responses/503'
-      security:
-        - bearerAuth: [ ]
-      tags:
-        - System
-      x-docs-sidebar-precedence: 10
-  /api/pvlt/1.0/data/collections/{collection}/objects:
-    delete:
-      operationId: delete-object-by-id
-      summary: Delete object
-      x-text-ref-description: './data/DeleteObjectByID.md'
-      parameters:
-        - description: The name of the collection containing the object.
-          in: path
-          name: collection
-          required: true
-          schema:
-            type: string
-        - description: The ID of the object.
-          in: query
-          name: id
-          required: true
-          schema:
-            type: array
-            items:
-              type: string
-            minItems: 1
-            maxLength: 1
-        - description: |
-            Options for the operation. Options include:
-            - `hard_delete` – permanently delete the objects.
-            - `deleted` – remove only deleted objects, requires `hard_delete` to be specified.
-          in: query
-          name: options
-          schema:
-            items:
-              type: string
-            type: array
-        - $ref: '#/components/parameters/adhoc_reason'
-        - $ref: '#/components/parameters/reason'
-        - $ref: '#/components/parameters/reload_cache'
-      responses:
-        200:
-          description: The request is successful.
-        400:
-          $ref: '#/components/responses/400'
-        401:
-          $ref: '#/components/responses/401'
-        403:
-          $ref: '#/components/responses/403'
-        404:
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/rest.HTTPError'
-          description: The collection or object is not found.
-        500:
-          $ref: '#/components/responses/500'
-        503:
-          $ref: '#/components/responses/503'
-      security:
-        - bearerAuth: []
-      tags:
-        - Objects
-      x-docs-sidebar-precedence: 6
-    get:
-      operationId: get-objects
+      operationId: list-objects
       summary: List objects
-      x-text-ref-description: './data/GetObjects.md'
+      description: >-
+        Returns a [paginated list](/api/api-pagination) of objects from a
+        collection with all or a subset of object property values.
+
+
+        The role performing this operation must have both of the following:
+
+        - The `CapDataReader` capability.
+
+        - At least one allowing policy and no denying policies for the `read` operation for each of the properties and the
+          collection requested in the call.
+
+        See [identity and access management](/data-security/identity-and-access-management) for more information about how
+
+        capabilities are used to control access to operations and policies are used to control access to data.
+
+
+        **Warning**: Use of the `unsafe` option, to include all object property values, may expose more private information than is required, use with caution.
       parameters:
         - description: The name of the collection containing the objects.
           in: path
@@ -815,31 +251,38 @@ paths:
           required: true
           schema:
             type: string
-        - $ref: '#/components/parameters/adhoc_reason'
-        - $ref: '#/components/parameters/reason'
-        - $ref: '#/components/parameters/reload_cache'
-        - $ref: '#/components/parameters/page_size'
-        - $ref: '#/components/parameters/cursor'
-        - description: A comma-separated list of object IDs. If not provided, all objects are returned. The number of IDs provided cannot exceed the default page size.
+        - $ref: "#/components/parameters/adhoc_reason"
+        - $ref: "#/components/parameters/reason"
+        - $ref: "#/components/parameters/reload_cache"
+        - $ref: "#/components/parameters/page_size"
+        - $ref: "#/components/parameters/cursor"
+        - $ref: "#/components/parameters/trans_param"
+        - description: A comma-separated list of object IDs
           in: query
-          name: id
+          name: ids
           schema:
             type: array
             items:
               type: string
               format: uuid
-        - description: |
+        - description: >
             Options for the operation. Options include:
+
             - `unsafe` – fetch all the properties, cannot be specified with `props`.
+
             - `show_builtins` – show built-in properties, can only be specified with `unsafe`.
-            - `deleted` – get only deleted objects.
+
+            - `archived` – whether to list only archived objects. If not specified, list only active objects.
           in: query
           name: options
           schema:
             items:
               type: string
             type: array
-        - description: The list of property names and transformations. To include multiple names and transformation bindings, provide a comma-separated list. For example, `props=first_name,last_name`. If the `unsafe` option is used, must be empty.
+        - description: The list of property names and transformations. To include multiple
+            names and transformation bindings, provide a comma-separated list.
+            For example, `props=first_name,last_name`. If the `unsafe` option is
+            used, must be empty.
           in: query
           name: props
           schema:
@@ -847,37 +290,129 @@ paths:
             items:
               type: string
       responses:
-        200:
+        "200":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/models.ObjectFieldsPage'
+                $ref: "#/components/schemas/ObjectFieldsPage"
           description: The request is successful.
-        400:
-          $ref: '#/components/responses/400'
-        401:
-          $ref: '#/components/responses/401'
-        403:
-          $ref: '#/components/responses/403'
-        404:
+        "400":
+          $ref: "#/components/responses/400"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+        "404":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/rest.HTTPError'
-          description: The collection, properties or object isn't found.
-        500:
-          $ref: '#/components/responses/500'
-        503:
-          $ref: '#/components/responses/503'
+                $ref: "#/components/schemas/rest.HTTPError"
+          description: The collection, properties or object is not found.
+        "409":
+          $ref: "#/components/responses/409"
+        "500":
+          $ref: "#/components/responses/500"
+        "503":
+          $ref: "#/components/responses/503"
       security:
         - bearerAuth: []
       tags:
         - Objects
       x-docs-sidebar-precedence: 1
+    post:
+      operationId: add-object
+      summary: Add object
+      description: >-
+        Adds an object to a collection. The request must include all the
+        non-nullable properties, as defined by the [collection
+        schema](/api/operations/list-collection-properties).
+
+
+        The role performing this operation must have both of the following:
+
+        - The `CapDataWriter` capability.
+
+        - At least one allowing policy and no denying policies for the `write` operation for each of the collection properties
+          provided in the call.
+
+        See [identity and access management](/data-security/identity-and-access-management) for more information about how
+
+        capabilities are used to control access to operations and policies are used to control access to data.
+      parameters:
+        - description: The name of the collection to add the object to.
+          in: path
+          name: collection
+          required: true
+          schema:
+            type: string
+        - $ref: "#/components/parameters/adhoc_reason"
+        - $ref: "#/components/parameters/reason"
+        - $ref: "#/components/parameters/reload_cache"
+        - description: Object expiration time in seconds, cannot be set to 0. If not set,
+            the default value is used. See the
+            `PVAULT_EXPIRATION_ASSOCIATED_OBJECTS` and
+            `PVAULT_EXPIRATION_UNASSOCIATED_OBJECTS` environment variables.
+          in: query
+          name: expiration_secs
+          schema:
+            type: string
+            pattern: ^[0-9]*$
+      requestBody:
+        x-has-pii: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Object"
+        description: The object details.
+        required: true
+        x-originalParamName: object
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ObjectID"
+          description: The request is successful.
+        "400":
+          $ref: "#/components/responses/400"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/rest.HTTPError"
+          description: The collection or properties is not found.
+        "409":
+          $ref: "#/components/responses/409"
+        "500":
+          $ref: "#/components/responses/500"
+        "503":
+          $ref: "#/components/responses/503"
+      security:
+        - bearerAuth: []
+      tags:
+        - Objects
+      x-docs-sidebar-precedence: 4
     patch:
       operationId: update-object-by-id
       summary: Update object
-      x-text-ref-description: './data/UpdateObjectByID.md'
+      description: >
+        Updates properties of an object in a collection.
+
+
+        The role performing this operation must have both of the following:
+
+        - The `CapDataWriter` capability.
+
+        - At least one allowing policy and no denying policies for the `write` operation for each of the collection properties
+          specified in the call.
+
+        See [identity and access management](/data-security/identity-and-access-management) for more information about how
+
+        capabilities are used to control access to operations and policies are used to control access to data.
       parameters:
         - description: The name of the collection containing the object.
           in: path
@@ -885,35 +420,32 @@ paths:
           required: true
           schema:
             type: string
-        - description: The ID of the object.
+        - description: A comma-separated list of object IDs
           in: query
-          name: id
+          name: ids
           required: true
           schema:
             type: array
             items:
               type: string
               format: uuid
-            maxItems: 1
             minItems: 1
-        - $ref: '#/components/parameters/adhoc_reason'
-        - $ref: '#/components/parameters/reason'
-        - $ref: '#/components/parameters/reload_cache'
-        - description: 'Object time to live (TTL) in seconds. If not set, the default TTL is used. See the `PVAULT_TTL_ASSOCIATED_OBJECTS` and `PVAULT_TTL_UNASSOCIATED_OBJECTS` time to live environment variables.'
+            maxItems: 1
+        - $ref: "#/components/parameters/adhoc_reason"
+        - $ref: "#/components/parameters/reason"
+        - $ref: "#/components/parameters/reload_cache"
+        - description: Object expiration time in seconds. If not set, the default is used.
+            See the `PVAULT_EXPIRATION_ASSOCIATED_OBJECTS` and
+            `PVAULT_EXPIRATION_UNASSOCIATED_OBJECTS` environment variables.
           in: query
-          name: ttl
+          name: expiration_secs
           schema:
-            # This is intentionally a `string` and intentionally with `*`.
-            # Our code differentiate between 3 situations:
-            #
-            #  not sending TTL in query - use the default TTL
-            #  sending empty TTL in query (`?ttl=` - an empty string) - set TTL to null
-            #  sending TTL with value (e.g. `?ttl=10`, `?ttl=0`) - set TTL to the value sent
             type: string
-            pattern: '^[0-9]*$'
-        - description: |
+            pattern: ^[0-9]*$
+        - description: >
             Options for the operation. Options include:
-            - `deleted` – update only deleted objects.
+
+            - `archived` – whether to update only archived objects. If not specified, update only active objects.
           in: query
           name: options
           schema:
@@ -925,102 +457,779 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/models.Object'
+              $ref: "#/components/schemas/Object"
         description: The object properties to update.
         required: true
         x-originalParamName: object
       responses:
-        200:
+        "200":
           description: The request is successful.
-        400:
-          $ref: '#/components/responses/400'
-        401:
-          $ref: '#/components/responses/401'
-        403:
-          $ref: '#/components/responses/403'
-        404:
+        "400":
+          $ref: "#/components/responses/400"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+        "404":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/rest.HTTPError'
+                $ref: "#/components/schemas/rest.HTTPError"
           description: The collection, properties, or object is not found.
-        500:
-          $ref: '#/components/responses/500'
-        503:
-          $ref: '#/components/responses/503'
+        "409":
+          $ref: "#/components/responses/409"
+        "500":
+          $ref: "#/components/responses/500"
+        "503":
+          $ref: "#/components/responses/503"
       security:
         - bearerAuth: []
       tags:
         - Objects
       x-docs-sidebar-precedence: 5
-    post:
-      operationId: add-object
-      summary: Add object
-      x-text-ref-description: './data/AddObject.md'
+    delete:
+      operationId: delete-object-by-id
+      summary: Delete object
+      description: >-
+        Deletes an object from a collection. This operation is irreversible.
+
+
+        The role performing this operation must have both of the following:
+
+        - The `CapDataWriter` capability.
+
+        - At least one allowing policy and no denying policies for the `delete` operation for each of the properties defined for
+          the collection specified in the call.
+
+          
+        See [identity and access management](/data-security/identity-and-access-management) for more information about how
+
+        capabilities are used to control access to operations and policies are used to control access to data.
       parameters:
-        - description: The name of the collection to add the object to.
+        - description: The name of the collection containing the object.
           in: path
           name: collection
           required: true
           schema:
             type: string
-        - $ref: '#/components/parameters/adhoc_reason'
-        - $ref: '#/components/parameters/reason'
-        - $ref: '#/components/parameters/reload_cache'
-        - description: 'Object time to live (TTL) in seconds, cannot be set to 0. If not set, the default TTL is used. See the `PVAULT_TTL_ASSOCIATED_OBJECTS` and `PVAULT_TTL_UNASSOCIATED_OBJECTS` time to live environment variables.'
+        - description: A comma-separated list of object IDs.
           in: query
-          name: ttl
+          name: ids
+          required: true
           schema:
-            type: string
-            pattern: '^[0-9]*$'
-      requestBody:
-        x-has-pii: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/models.Object'
-        description: The object details.
-        required: true
-        x-originalParamName: object
+            type: array
+            items:
+              type: string
+              format: uuid
+            minItems: 1
+            maxLength: 1
+        - description: >
+            Options for the operation. Options include:
+
+            - `archived` – whether to delete only archived objects. If not specified, delete only active objects.
+          in: query
+          name: options
+          schema:
+            items:
+              type: string
+            type: array
+        - $ref: "#/components/parameters/adhoc_reason"
+        - $ref: "#/components/parameters/reason"
+        - $ref: "#/components/parameters/reload_cache"
       responses:
-        200:
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/models.ObjectID'
+        "200":
           description: The request is successful.
-        400:
-          $ref: '#/components/responses/400'
-        401:
-          $ref: '#/components/responses/401'
-        403:
-          $ref: '#/components/responses/403'
-        404:
+        "400":
+          $ref: "#/components/responses/400"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+        "404":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/rest.HTTPError'
-          description: The collection or properties isn't found.
-        500:
-          $ref: '#/components/responses/500'
-        503:
-          $ref: '#/components/responses/503'
+                $ref: "#/components/schemas/rest.HTTPError"
+          description: The collection or object is not found.
+        "409":
+          $ref: "#/components/responses/409"
+        "500":
+          $ref: "#/components/responses/500"
+        "503":
+          $ref: "#/components/responses/503"
       security:
         - bearerAuth: []
       tags:
         - Objects
+      x-docs-sidebar-precedence: 6
+  "/api/pvlt/1.0/data/collections/{collection}/tokens":
+    post:
+      operationId: tokenize
+      summary: Tokenize
+      description: >
+        Creates tokens that reference the values of objects' properties. The
+        token ID is partially or wholly randomly-generated and, therefore, is
+        not sensitive.
+
+
+        The returned token IDs are in the same order as the object IDs in the request. No tokens are created if any object IDs are invalid or not found.
+
+
+        If this operation is called for an object ID and properties that have a token:
+
+        - Any token tags are appended to the existing token.
+
+        - If an expiration is specified, then the token expiry is updated. If an expiration is not specified, the token expiry is updated if the default settings result in an expiry date after the token's current expiry date.
+
+
+        The role performing this operation must have both of these:
+
+        - The `CapTokensWriter` capability.
+
+        - At least one allowing policy and no denying policies for the `tokenize` operation for each of the collection properties specified in the call.
+
+
+        See [identity and access management](/data-security/identity-and-access-management) for more information about how capabilities are used to control access to operations and policies are used to control access to data.
+      parameters:
+        - description: Token expiration time in seconds. If not set, the default
+            expiration time is used. See the `PVAULT_EXPIRATION_TOKENS`
+            variable.
+          in: query
+          name: expiration_secs
+          schema:
+            type: string
+            pattern: ^[0-9]*$
+        - description: The name of the collection containing the objects.
+          in: path
+          name: collection
+          required: true
+          schema:
+            type: string
+        - $ref: "#/components/parameters/adhoc_reason"
+        - $ref: "#/components/parameters/reason"
+        - $ref: "#/components/parameters/reload_cache"
+      requestBody:
+        x-has-pii: false
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TokenizeRequest"
+        description: Details of the tokenization request.
+        required: true
+        x-originalParamName: object_prop
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: "#/components/schemas/TokenValue"
+                type: array
+          description: The request is successful.
+        "400":
+          $ref: "#/components/responses/400"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/rest.HTTPError"
+              example:
+                objectid: credit_cadr
+                error_code: PV2003
+                message: One or more property fields is invalid.
+          description: The collection, objects, or properties aren't found or are missing.
+        "409":
+          $ref: "#/components/responses/409"
+        "500":
+          $ref: "#/components/responses/500"
+        "503":
+          $ref: "#/components/responses/503"
+      security:
+        - bearerAuth: []
+      tags:
+        - Tokens
+      x-docs-sidebar-precedence: 1
+    get:
+      operationId: detokenize
+      summary: Detokenize tokens
+      description: >
+        Returns the object property values for tokens.
+
+
+        The tokens returned by this operation are defined using three query parameters: `token_ids`, `object_ids`, and `tags`. If the token query includes an invalid or not found token ID, the operation returns a 404 status code. Otherwise, the operation returns an empty response if it finds no matches. See the [Retrieve a token](/guides/tokenize-personal-data/retrieve-a-token) guide for more information about how to match tokens for this operation.
+
+
+        The role performing this operation must have all of these:
+
+        - The `CapTokensDetokenizer` capability.
+
+        - Policies:
+          + At least one allowing policy and no denying policies for the `detokenize` operation for each of the collection properties that are tokenized by tokens specified in the query.
+          + At least one allowing policy and no denying policies for the `read` operation for each of the collection properties that are tokenized by tokens specified in the query.
+
+        See [identity and access management](/data-security/identity-and-access-management) for more information about how capabilities are used to control access to operations and policies are used to control access to data.
+      parameters:
+        - description: Comma-separated list of object IDs.
+          in: query
+          name: object_ids
+          schema:
+            items:
+              type: string
+              format: uuid
+            type: array
+        - description: |
+            Options for the operation. Options include:
+            - `include_metadata` - show token metadata in the response.
+          in: query
+          name: options
+          schema:
+            type: array
+            items:
+              type: string
+              enum:
+                - include_metadata
+        - description: Comma-separated list of tags.
+          in: query
+          name: tags
+          schema:
+            items:
+              type: string
+            type: array
+        - description: Comma-separated list of token IDs.
+          in: query
+          name: token_ids
+          schema:
+            items:
+              type: string
+            type: array
+        - description: The name of the collection containing the objects.
+          in: path
+          name: collection
+          required: true
+          schema:
+            type: string
+        - $ref: "#/components/parameters/adhoc_reason"
+        - $ref: "#/components/parameters/reason"
+        - $ref: "#/components/parameters/reload_cache"
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: "#/components/schemas/DetokenizedToken"
+                type: array
+          description: The request is successful.
+        "400":
+          $ref: "#/components/responses/400"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/rest.HTTPError"
+              example:
+                objectid: b56dd6aa-35f0-11ed-a261-0242ac120002
+                error_code: PV3087
+                message: One or more token IDs not found.
+          description: The collection, reason, or tokens aren't found or are missing,
+            `reason` is set to `other` but no `adhoc_reason` is provided, or no
+            token query parameters are provided.
+        "409":
+          $ref: "#/components/responses/409"
+        "500":
+          $ref: "#/components/responses/500"
+        "503":
+          $ref: "#/components/responses/503"
+      security:
+        - bearerAuth: []
+      tags:
+        - Tokens
+      x-docs-sidebar-precedence: 2
+    delete:
+      operationId: delete-tokens
+      summary: Delete tokens
+      description: >
+        Deletes tokens.
+
+
+        The tokens to delete are those that match all the criteria in the `token_ids`, `object_ids`,  and `tags` parameters. If the token query finds no matches, the operation returns a 404 error. See [search tokens](search-tokens) for more details.
+
+
+        The role performing this operation must have both of these:
+
+        - The `CapTokensWriter` capability.
+
+        - At least one allowing policy and no denying policies for the `delete` operation for the `tokens` resource of the specified collection.
+
+
+        See [identity and access management](/data-security/identity-and-access-management) for more information about how capabilities are used to control access to operations and policies are used to control access to data.
+      parameters:
+        - description: Comma-separated list of object IDs.
+          in: query
+          name: object_ids
+          schema:
+            items:
+              type: string
+              format: uuid
+            type: array
+        - description: Comma-separated list of tags.
+          in: query
+          name: tags
+          schema:
+            items:
+              type: string
+            type: array
+        - description: Comma-separated list of token IDs.
+          in: query
+          name: token_ids
+          schema:
+            items:
+              type: string
+            type: array
+        - description: >
+            Options for the operation. Options include:
+
+            - `archived` – whether to delete only archived tokens. If not specified, delete only active tokens.
+          in: query
+          name: options
+          schema:
+            items:
+              type: string
+            type: array
+        - description: The name of the collection containing the objects.
+          in: path
+          name: collection
+          required: true
+          schema:
+            type: string
+        - $ref: "#/components/parameters/adhoc_reason"
+        - $ref: "#/components/parameters/reason"
+        - $ref: "#/components/parameters/reload_cache"
+      responses:
+        "200":
+          description: The request is successful.
+        "400":
+          $ref: "#/components/responses/400"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/rest.HTTPError"
+              example:
+                error_code: PV3009
+                message: The token is not found.
+          description: The collection or reason aren't found or are missing, the `reason`
+            is set to `other` but no `adhoc_reason` is provided, no token query
+            parameters are provided, or the query finds no matching tokens.
+        "409":
+          $ref: "#/components/responses/409"
+        "500":
+          $ref: "#/components/responses/500"
+        "503":
+          $ref: "#/components/responses/503"
+      security:
+        - bearerAuth: []
+      tags:
+        - Tokens
+      x-docs-sidebar-precedence: 3
+    patch:
+      operationId: update-tokens
+      summary: Update tokens
+      description: >
+        Updates `tags` and `expiration` token metadata.
+
+
+        The role performing this operation must have both of these:
+
+        - The `CapTokensWriter` capability.
+
+        - At least one allowing policy and no denying policies for the `write` operation for the `tokens` resource of the collection specified in the call.
+
+
+        See [identity and access management](/data-security/identity-and-access-management) for more information about how capabilities are used to control access to operations and policies are used to control access to data.
+
+
+        The tokens returned by this operation are defined using three query parameters: `token_ids`, `object_ids`, and `tags`. If no tokens are matched, status code 404 is returned. See the [Retrieve a token](/guides/tokenize-personal-data/retrieve-a-token) guide for more information about how to match tokens for this operation.
+      parameters:
+        - description: Expiration time in seconds for the tokens. If not set, the expiry
+            dates of the tokens are not changed.
+          in: query
+          name: expiration_secs
+          schema:
+            type: string
+            pattern: ^[0-9]*$
+        - description: Comma-separated list of object IDs.
+          in: query
+          name: object_ids
+          schema:
+            type: array
+            items:
+              type: string
+              format: uuid
+        - description: Comma-separated list of tags.
+          in: query
+          name: tags
+          schema:
+            items:
+              type: string
+            type: array
+        - description: Comma-separated list of token IDs.
+          in: query
+          name: token_ids
+          schema:
+            items:
+              type: string
+            type: array
+        - description: >
+            Options for the operation. Options include:
+
+            - `archived` – whether to update only archived tokens. If not specified, update only active tokens.
+          in: query
+          name: options
+          schema:
+            items:
+              type: string
+            type: array
+        - description: The name of the collection containing the objects.
+          in: path
+          name: collection
+          required: true
+          schema:
+            type: string
+        - $ref: "#/components/parameters/adhoc_reason"
+        - $ref: "#/components/parameters/reason"
+        - $ref: "#/components/parameters/reload_cache"
+      requestBody:
+        x-has-pii: false
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateTokenRequest"
+        description: Update token request details.
+        required: true
+        x-originalParamName: body
+      responses:
+        "200":
+          description: The request is successful.
+        "400":
+          $ref: "#/components/responses/400"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/rest.HTTPError"
+              example:
+                error_code: PV3009
+                message: The token is not found.
+          description: The collection or reason aren't found or are missing, the `reason`
+            is set to `other` but no `adhoc_reason` is provided, no token query
+            parameters are provided, or the query finds no matching tokens.
+        "409":
+          $ref: "#/components/responses/409"
+        "500":
+          $ref: "#/components/responses/500"
+        "503":
+          $ref: "#/components/responses/503"
+      security:
+        - bearerAuth: []
+      tags:
+        - Tokens
       x-docs-sidebar-precedence: 4
-  /api/pvlt/1.0/data/collections/{collection}/properties/{property}:
+  "/api/pvlt/1.0/ctl/collections/{collection}":
+    get:
+      operationId: get-collection
+      summary: Get collection
+      description: >
+        Gets a collection and its properties.
+
+
+        The collection details can be returned in JSON or PVSchema format using the `format` query parameter or by setting the `Accept` header to `application/json` or `application/pvschema`, respectively. The default is to return JSON.
+
+
+        See [PVSchema](/guides/manage-collections-and-schemas/reference/pvschema) for more details on the structure and content of PVSchema.
+
+
+        The role that performs this operation must have the `CapCollectionsReader` capability.
+
+        See [Access control](/data-security/identity-and-access-management#access-control) for more information about how
+
+        capabilities are used to control access to operations.
+      parameters:
+        - $ref: "#/components/parameters/collection_name"
+        - $ref: "#/components/parameters/jsonOrPvSchemaFormat"
+        - description: |
+            Options for the operation. Options include:
+            - `show_builtins` – show built-in properties in the response.
+          in: query
+          name: options
+          schema:
+            items:
+              enum:
+                - show_builtins
+              type: string
+            type: array
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Collection"
+            application/pvschema:
+              schema:
+                type: string
+                $ref: "#/components/schemas/Collection.pvschema"
+          description: The request is successful.
+        "400":
+          $ref: "#/components/responses/400"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/rest.HTTPError"
+          description: The collection is not found.
+        "409":
+          $ref: "#/components/responses/409"
+        "500":
+          $ref: "#/components/responses/500"
+        "503":
+          $ref: "#/components/responses/503"
+      security:
+        - bearerAuth: []
+      tags:
+        - Collections
+      x-docs-sidebar-precedence: 2
+    patch:
+      operationId: update-collection
+      summary: Update collection
+      description: >
+        Adds properties to a collection.
+
+
+        The collection request can be provided in JSON or PVSchema format by setting the `Content-Type` header to `application/json` or `application/pvschema`, respectively. The collection can be returned in JSON or PVSchema format using the `format` query parameter or by setting  the  `Accept` header to `application/json` or `application/pvschema`, respectively. The default is to return JSON.
+
+
+        See [PVSchema](/guides/manage-collections-and-schemas/reference/pvschema) for more details on the structure and content of PVSchema.
+
+
+        The collection name provided in the path parameter must match the collection name in the JSON or PVSchema.
+
+
+        The role that performs this operation must have the `CapCollectionsWriter` capability.
+
+        See [Access control](/data-security/identity-and-access-management#access-control) for more information about how
+
+        capabilities are used to control access to operations.
+      parameters:
+        - $ref: "#/components/parameters/collection_name"
+        - $ref: "#/components/parameters/jsonOrPvSchemaFormat"
+        - description: |
+            Options for the operation. Options include:
+            - `show_builtins` – show built-in properties in the response.
+          in: query
+          name: options
+          schema:
+            items:
+              enum:
+                - show_builtins
+              type: string
+            type: array
+      requestBody:
+        x-has-pii: false
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Collection"
+          application/pvschema:
+            schema:
+              type: string
+        description: Details of the collection, including its properties.
+        required: true
+        x-originalParamName: collectionChanges
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Collection"
+            application/pvschema:
+              schema:
+                type: string
+          description: The request is successful.
+        "400":
+          $ref: "#/components/responses/400"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/rest.HTTPError"
+          description: The collection is not found.
+        "409":
+          $ref: "#/components/responses/409"
+        "500":
+          $ref: "#/components/responses/500"
+        "501":
+          $ref: "#/components/responses/501"
+        "503":
+          $ref: "#/components/responses/503"
+      security:
+        - bearerAuth: []
+      tags:
+        - Collections
+      x-docs-sidebar-precedence: 4
+    delete:
+      operationId: delete-collection
+      summary: Delete collection
+      description: >-
+        Deletes a collection.
+
+
+        The role that performs this operation must have the `CapCollectionsWriter` capability.
+
+        See [Access control](/data-security/identity-and-access-management#access-control) for more information about how
+
+        capabilities are used to control access to operations.
+      parameters:
+        - $ref: "#/components/parameters/collection_name"
+      responses:
+        "200":
+          description: The request is successful.
+        "400":
+          $ref: "#/components/responses/400"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/rest.HTTPError"
+          description: The collection is not found.
+        "409":
+          $ref: "#/components/responses/409"
+        "500":
+          $ref: "#/components/responses/500"
+        "503":
+          $ref: "#/components/responses/503"
+      security:
+        - bearerAuth: []
+      tags:
+        - Collections
+      x-docs-sidebar-precedence: 5
+  "/api/pvlt/1.0/ctl/collections/{collection}/properties":
+    get:
+      operationId: list-collection-properties
+      summary: List collection properties
+      description: >-
+        Lists the properties of a collection.
+
+
+        The role that performs this operation must have the `CapCollectionsReader` capability.
+
+        See [Access control](/data-security/identity-and-access-management#access-control) for more information about how
+
+        capabilities are used to control access to operations.
+      parameters:
+        - description: The name of the collection containing the properties.
+          in: path
+          name: collection
+          required: true
+          example: buyers
+          schema:
+            type: string
+        - description: |
+            Options for the operation. Options include: 
+            - `show_builtins` – show built-in properties in the response.
+          in: query
+          name: options
+          schema:
+            items:
+              enum:
+                - show_builtins
+              type: string
+            type: array
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: "#/components/schemas/Property"
+                type: array
+          description: The request is successful.
+        "400":
+          $ref: "#/components/responses/400"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/rest.HTTPError"
+          description: The collection is not found.
+        "409":
+          $ref: "#/components/responses/409"
+        "500":
+          $ref: "#/components/responses/500"
+        "503":
+          $ref: "#/components/responses/503"
+      security:
+        - bearerAuth: []
+      tags:
+        - Collection properties
+      x-docs-sidebar-precedence: 2
+  "/api/pvlt/1.0/data/collections/{collection}/properties/{property}":
     get:
       operationId: get-objects-property
       summary: Get objects property
-      x-text-ref-description: './data/GetObjectsProperty.md'
+      description: >-
+        Returns a [paginated list](/api/api-pagination) of the values of a
+        property for objects in a collection.
+
+
+        The role performing this operation must have both of the following:
+
+        - The `CapDataReader` capability.
+
+        - At least one allowing policy and no denying policies for the `read` operation for the property and the and the
+          collection requested in the call.
+
+        See [identity and access management](/data-security/identity-and-access-management) for more information about how
+
+        capabilities are used to control access to operations and policies are used to control access to data.
       parameters:
-        - $ref: '#/components/parameters/adhoc_reason'
-        - $ref: '#/components/parameters/reason'
-        - $ref: '#/components/parameters/reload_cache'
-        - $ref: '#/components/parameters/page_size'
-        - $ref: '#/components/parameters/cursor'
+        - $ref: "#/components/parameters/adhoc_reason"
+        - $ref: "#/components/parameters/reason"
+        - $ref: "#/components/parameters/reload_cache"
+        - $ref: "#/components/parameters/page_size"
+        - $ref: "#/components/parameters/cursor"
+        - $ref: "#/components/parameters/trans_param"
         - description: The name of the collection containing the objects.
           in: path
           name: collection
@@ -1033,56 +1242,346 @@ paths:
           required: true
           schema:
             type: string
-        - description: |
+        - description: >
             Options for the operation. Options include:
-            - `deleted` – get only deleted objects.
+
+            - `archived` – whether to get only archived objects. If not specified, get only active objects.
           in: query
           name: options
           schema:
             items:
               type: string
             type: array
-        - description: The ID of the object. If not given - return all objects
+        - description: A comma-separated list of object IDs
           in: query
-          name: id
+          name: ids
           schema:
             type: array
             items:
               type: string
               format: uuid
       responses:
-        200:
+        "200":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/models.ObjectFieldsPage'
+                $ref: "#/components/schemas/ObjectFieldsPage"
           description: The request is successful.
-        400:
-          $ref: '#/components/responses/400'
-        401:
-          $ref: '#/components/responses/401'
-        403:
-          $ref: '#/components/responses/403'
-        404:
+        "400":
+          $ref: "#/components/responses/400"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+        "404":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/rest.HTTPError'
-          description: The collection, properties or object isn't found.
-        500:
-          $ref: '#/components/responses/500'
-        503:
-          $ref: '#/components/responses/503'
+                $ref: "#/components/schemas/rest.HTTPError"
+          description: The collection, properties or object is not found.
+        "409":
+          $ref: "#/components/responses/409"
+        "500":
+          $ref: "#/components/responses/500"
+        "503":
+          $ref: "#/components/responses/503"
       security:
         - bearerAuth: []
       tags:
         - Objects
       x-docs-sidebar-precedence: 2
-  /api/pvlt/1.0/data/collections/{collection}/query/objects:
+  "/api/pvlt/1.0/ctl/collections/{collection}/properties/{property}":
+    post:
+      operationId: add-collection-property
+      summary: Add collection property
+      description: >-
+        Adds a property to a collection.
+
+
+        The property name provided in the `property` parameter and request body must match. When the collection contains objects, only nullable properties can be added to the collection.
+
+
+        The role performing this operation must have the `CapCollectionsWriter` capability.
+
+        See [Access control](/data-security/identity-and-access-management#access-control) for more information about how
+
+        capabilities are used to control access to operations.
+      parameters:
+        - description: The name of the collection to add the property to.
+          in: path
+          name: collection
+          required: true
+          schema:
+            type: string
+          example: buyers
+        - description: The name of the property to add.
+          in: path
+          name: property
+          required: true
+          schema:
+            type: string
+          example: buyer_phone
+      requestBody:
+        x-has-pii: false
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Property"
+            example:
+              description: The phone number of the buyer.
+              is_encrypted: true
+              is_index: false
+              is_nullable: true
+              is_unique: false
+              name: buyer_phone
+              pii_type_name: PHONE_NUMBER
+        description: Details of the property.
+        required: true
+        x-originalParamName: property
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Property"
+          description: The request is successful.
+        "400":
+          $ref: "#/components/responses/400"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/rest.HTTPError"
+          description: The collection is not found.
+        "409":
+          $ref: "#/components/responses/409"
+        "500":
+          $ref: "#/components/responses/500"
+        "503":
+          $ref: "#/components/responses/503"
+      security:
+        - bearerAuth: []
+      tags:
+        - Collection properties
+      x-docs-sidebar-precedence: 3
+    get:
+      operationId: get-collection-property
+      summary: Get collection property
+      description: >-
+        Gets a property of a collection.
+
+
+        The role that performs this operation must have the `CapCollectionsReader` capability.
+
+        See [Access control](/data-security/identity-and-access-management#access-control) for more information about how
+
+        capabilities are used to control access to operations.
+      parameters:
+        - description: The name of the collection containing the property.
+          in: path
+          name: collection
+          required: true
+          example: buyers
+          schema:
+            type: string
+        - description: The name of the property.
+          in: path
+          name: property
+          required: true
+          example: buyer_name
+          schema:
+            type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Property"
+          description: The request is successful.
+        "400":
+          $ref: "#/components/responses/400"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/rest.HTTPError"
+          description: The collection or property is not found.
+        "409":
+          $ref: "#/components/responses/409"
+        "500":
+          $ref: "#/components/responses/500"
+        "503":
+          $ref: "#/components/responses/503"
+      security:
+        - bearerAuth: []
+      tags:
+        - Collection properties
+      x-docs-sidebar-precedence: 4
+    patch:
+      operationId: update-collection-property
+      summary: Update collection property
+      description: >-
+        ** Not implemented **
+
+
+        Updates a property of a collection. Properties with values on objects in the collection cannot be updated. Any property not included in the request is replaced with its default values.
+
+
+        The role that performs this operation must have the `CapCollectionsWriter` capability.
+
+        See [Access control](/data-security/identity-and-access-management#access-control) for more information about how
+
+        capabilities are used to control access to operations.
+      parameters:
+        - description: The name of the collection containing the property.
+          in: path
+          name: collection
+          required: true
+          schema:
+            type: string
+          example: buyers
+        - description: The name of the property.
+          in: path
+          name: property
+          required: true
+          schema:
+            type: string
+          example: buyer_phone
+      requestBody:
+        x-has-pii: false
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Property"
+            example:
+              description: The phone number of the buyer.
+              is_encrypted: false
+              is_index: false
+              is_nullable: true
+              is_unique: false
+              name: buyer_phone
+              pii_type_name: PHONE_NUMBER
+        description: property info
+        required: true
+        x-originalParamName: property
+      responses:
+        "200":
+          description: Property updated successfully
+        "400":
+          $ref: "#/components/responses/400"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/rest.HTTPError"
+          description: The collection or property wasn't found.
+        "409":
+          $ref: "#/components/responses/409"
+        "500":
+          $ref: "#/components/responses/500"
+        "501":
+          $ref: "#/components/responses/501"
+        "503":
+          $ref: "#/components/responses/503"
+      security:
+        - bearerAuth: []
+      tags:
+        - Collection properties
+      x-docs-sidebar-precedence: 5
+    delete:
+      operationId: delete-collection-property
+      summary: Delete collection property
+      description: >-
+        Deletes a property from a collection.
+
+
+        Any values stored against the property in objects are also deleted. This operation is irreversible.
+
+
+        The role that performs this operation must have the `CapCollectionsWriter` capability.
+
+        See [Access control](/data-security/identity-and-access-management#access-control) for more information about how
+
+        capabilities are used to control access to operations.
+      parameters:
+        - description: The name of the collection containing the property.
+          in: path
+          name: collection
+          required: true
+          schema:
+            type: string
+          example: buyers
+        - description: The name of the property.
+          in: path
+          name: property
+          required: true
+          schema:
+            type: string
+          example: buyer_phone
+      responses:
+        "200":
+          description: The request is successful.
+        "400":
+          $ref: "#/components/responses/400"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/rest.HTTPError"
+          description: The collection or property wasn't found.
+        "409":
+          $ref: "#/components/responses/409"
+        "500":
+          $ref: "#/components/responses/500"
+        "503":
+          $ref: "#/components/responses/503"
+      security:
+        - bearerAuth: []
+      tags:
+        - Collection properties
+      x-docs-sidebar-precedence: 6
+  "/api/pvlt/1.0/data/collections/{collection}/query/objects":
     post:
       operationId: search-objects
       summary: Search objects
-      x-text-ref-description: './data/SearchObjects.md'
+      description: >-
+        Returns a [paginated list](/api/api-pagination) of objects, with
+        property values, from a collection that satisfies a query.
+
+
+        The role performing this operation must have all the following:
+
+        - The `CapDataSearcher` capability.
+
+        - Policies:
+          + At least one allowing policy and no denying policies for the `read` operation for each of the collection properties
+            specified in the `props` query parameter.
+          + At least one allowing policy and no denying policies for the `search` operation for each of the collection
+            properties
+            specified in the `query` body parameter.
+
+        See [identity and access management](/data-security/identity-and-access-management) for more information about how
+
+        capabilities are used to control access to operations and policies are used to control access to data.
+
+
+        **Warning**: Use of the `unsafe` option, to include all object property values, may expose more private information than is required, use with caution..
       parameters:
         - description: The name of the collection containing the objects.
           in: path
@@ -1090,23 +1589,30 @@ paths:
           required: true
           schema:
             type: string
-        - $ref: '#/components/parameters/adhoc_reason'
-        - $ref: '#/components/parameters/reason'
-        - $ref: '#/components/parameters/reload_cache'
-        - $ref: '#/components/parameters/page_size'
-        - $ref: '#/components/parameters/cursor'
-        - description: |
+        - $ref: "#/components/parameters/adhoc_reason"
+        - $ref: "#/components/parameters/reason"
+        - $ref: "#/components/parameters/reload_cache"
+        - $ref: "#/components/parameters/page_size"
+        - $ref: "#/components/parameters/cursor"
+        - $ref: "#/components/parameters/trans_param"
+        - description: >
             Options for the operation. Options include:
+
             - `unsafe` – fetch all the properties, cannot be specified with `props`.
+
             - `show_builtins` – show built-in properties, can only be specified with `unsafe`.
-            - `deleted` – get only deleted objects.
+
+            - `archived` – whether to search only archived objects. If not specified, search only active objects.
           in: query
           name: options
           schema:
             items:
               type: string
             type: array
-        - description: The list of property names and transformations. To include multiple names and transformation bindings, provide a comma-separated list. For example, `props=first_name,last_name`. If the `unsafe` option is used, must be empty.
+        - description: The list of property names and transformations. To include multiple
+            names and transformation bindings, provide a comma-separated list.
+            For example, `props=first_name,last_name`. If the `unsafe` option is
+            used, must be empty.
           in: query
           name: props
           schema:
@@ -1118,7 +1624,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/models.Query'
+              $ref: "#/components/schemas/Query"
         description: |
           The query.
           This is a JSON object consisting of property keys and match values.
@@ -1138,653 +1644,483 @@ paths:
         required: true
         x-originalParamName: query
       responses:
-        200:
+        "200":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/models.ObjectFieldsPage'
+                $ref: "#/components/schemas/ObjectFieldsPage"
           description: The request is successful.
-        400:
-          $ref: '#/components/responses/400'
-        401:
-          $ref: '#/components/responses/401'
-        403:
-          $ref: '#/components/responses/403'
-        404:
+        "400":
+          $ref: "#/components/responses/400"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+        "404":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/rest.HTTPError'
-          description: The collection or properties isn't found.
-        500:
-          $ref: '#/components/responses/500'
-        503:
-          $ref: '#/components/responses/503'
+                $ref: "#/components/schemas/rest.HTTPError"
+          description: The collection or properties is not found.
+        "409":
+          $ref: "#/components/responses/409"
+        "500":
+          $ref: "#/components/responses/500"
+        "503":
+          $ref: "#/components/responses/503"
       security:
         - bearerAuth: []
       tags:
         - Objects
       x-docs-sidebar-precedence: 3
-  /api/pvlt/1.0/data/collections/{collection}/query/tokens:
+  "/api/pvlt/1.0/data/collections/{collection}/rotate/tokens":
+    post:
+      operationId: rotate-tokens
+      summary: Rotate tokens
+      description: >
+        Generates new token IDs for a list of tokens.
+
+
+        The role performing this operation must have both of these:
+
+        - The `CapTokensWriter` capability.
+
+        - At least one allowing policy and no denying policies for the `write` operation for the `tokens` resource of the specified collection.
+
+
+        See [identity and access management](/data-security/identity-and-access-management) for more information about how capabilities are used to control access to operations and policies are used to control access to data.
+      parameters:
+        - description: Comma-separated list of token IDs.
+          in: query
+          name: token_ids
+          required: true
+          schema:
+            items:
+              type: string
+            type: array
+        - description: The name of the collection containing the objects.
+          in: path
+          name: collection
+          required: true
+          schema:
+            type: string
+        - $ref: "#/components/parameters/adhoc_reason"
+        - $ref: "#/components/parameters/reason"
+        - $ref: "#/components/parameters/reload_cache"
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RotatedTokens"
+          description: The request is successful.
+        "400":
+          $ref: "#/components/responses/400"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/rest.HTTPError"
+              example:
+                token_ids: d27923c6-5d16-41e3-89ee-118b05a25372
+                error_code: PV3087
+                message: One or more token IDs not found.
+          description: The collection, reason, or tokens aren't found or are missing or
+            the `reason` is set to `other` but no `adhoc_reason` is provided.
+        "409":
+          $ref: "#/components/responses/409"
+        "500":
+          $ref: "#/components/responses/500"
+        "503":
+          $ref: "#/components/responses/503"
+      security:
+        - bearerAuth: []
+      tags:
+        - Tokens
+      x-docs-sidebar-precedence: 5
+  "/api/pvlt/1.0/data/collections/{collection}/query/tokens":
     post:
       operationId: search-tokens
       summary: Search tokens
-      x-text-ref-description: './data/SearchTokens.md'
+      description: >+
+        Lists tokens with their metadata. 
+
+
+        If the token query includes an invalid or not found token ID, the operation returns a 404 error. Otherwise, if no matches are found, the operation returns an empty response. 
+
+
+        The role performing this operation must have all of these:
+
+        - The `CapTokensReader` capability.
+
+        - At least one allowing policy and no denying policies for the `read` operation for the `tokens` resource of the specified collection.
+
+
+        See [identity and access management](/data-security/identity-and-access-management) for more information about how capabilities are used to control access to operations and policies are used to control access to data.
+
+
+        The tokens returned by this operation are defined using three query parameters: `token_ids`, `object_ids`, and `tags`. If the token query includes an invalid or not found token ID, the operation returns a 404 status code. Otherwise, the operation returns an empty response if it finds no matches. See the [Retrieve a token](/guides/tokenize-personal-data/retrieve-a-token) guide for more information about how to match tokens for this operation.
+
       parameters:
-        - description: |
+        - description: >
             Options for the operation. Options include:
-            - `deleted` – get only deleted tokens.
+
+            - `archived` – whether to search only archived tokens. If not specified, search only active tokens.
           in: query
           name: options
           schema:
             type: array
             items:
               type: string
-        - description: The name of the collection containing the object.
+        - description: The name of the collection containing the objects.
           in: path
           name: collection
           required: true
           schema:
             type: string
-        - $ref: '#/components/parameters/adhoc_reason'
-        - $ref: '#/components/parameters/reason'
-        - $ref: '#/components/parameters/reload_cache'
+        - $ref: "#/components/parameters/adhoc_reason"
+        - $ref: "#/components/parameters/reason"
+        - $ref: "#/components/parameters/reload_cache"
       requestBody:
         x-has-pii: false
-        description: 'The query. This is a JSON object consisting of query filters.'
+        description: The token query.
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/models.QueryToken'
+              $ref: "#/components/schemas/QueryToken"
       responses:
-        200:
+        "200":
           content:
             application/json:
               schema:
                 items:
-                  $ref: '#/components/schemas/models.TokenMetadata'
+                  $ref: "#/components/schemas/TokenMetadata"
                 type: array
           description: The request is successful.
-        400:
-          $ref: '#/components/responses/400'
-        401:
-          $ref: '#/components/responses/401'
-        403:
-          $ref: '#/components/responses/403'
-        404:
+        "400":
+          $ref: "#/components/responses/400"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+        "404":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/rest.HTTPError'
-          description: The collection, token, or referenced object or property was not found.
-        500:
-          $ref: '#/components/responses/500'
-        503:
-          $ref: '#/components/responses/503'
+                $ref: "#/components/schemas/rest.HTTPError"
+              example:
+                objectid: b56dd6aa-35f0-11ed-a261-0242ac120002
+                error_code: PV3087
+                message: One or more token IDs not found.
+          description: The collection, reason, or tokens aren't found or are missing,
+            `reason` is set to `other` but no `adhoc_reason` is provided, or no
+            token query parameters are provided.
+        "409":
+          $ref: "#/components/responses/409"
+        "500":
+          $ref: "#/components/responses/500"
+        "503":
+          $ref: "#/components/responses/503"
       security:
         - bearerAuth: []
       tags:
         - Tokens
       x-docs-sidebar-precedence: 6
-  /api/pvlt/1.0/data/collections/{collection}/tokens:
-    delete:
-      operationId: delete-tokens
-      summary: Delete tokens
-      x-text-ref-description: './data/DeleteTokens.md'
-      parameters:
-        - description: Comma-separated list of object IDs.
-          in: query
-          name: object_id
-          schema:
-            items:
-              type: string
-            type: array
-        - description: Comma-separated list of tags.
-          in: query
-          name: tag
-          schema:
-            items:
-              type: string
-            type: array
-        - description: Comma-separated list of token IDs.
-          in: query
-          name: token_id
-          schema:
-            items:
-              type: string
-            type: array
-        - description: |
-            Options for the operation. Options include:
-            - `hard_delete` – permanently delete the tokens.
-            - `deleted` – remove only deleted tokens, requires `hard_delete` to be specified.
-          in: query
-          name: options
-          schema:
-            items:
-              type: string
-            type: array
-        - description: The name of the collection containing the object.
-          in: path
-          name: collection
-          required: true
-          schema:
-            type: string
-        - $ref: '#/components/parameters/adhoc_reason'
-        - $ref: '#/components/parameters/reason'
-        - $ref: '#/components/parameters/reload_cache'
-      responses:
-        200:
-          description: The request is successful.
-        400:
-          $ref: '#/components/responses/400'
-        401:
-          $ref: '#/components/responses/401'
-        403:
-          $ref: '#/components/responses/403'
-        404:
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/rest.HTTPError'
-          description: The collection or token isn't found.
-        500:
-          $ref: '#/components/responses/500'
-        503:
-          $ref: '#/components/responses/503'
-      security:
-        - bearerAuth: []
-      tags:
-        - Tokens
-      x-docs-sidebar-precedence: 3
+  /api/pvlt/1.0/ctl/transformations:
     get:
-      operationId: detokenize
-      summary: Detokenize tokens
-      x-text-ref-description: './data/Detokenize.md'
-      parameters:
-        - description: Comma-separated list of object IDs.
-          in: query
-          name: object_id
-          schema:
-            items:
-              type: string
-            type: array
-        - description: Comma-separated list of options.
-          in: query
-          name: options
-          schema:
-            items:
-              type: string
-            type: array
-        - description: Comma-separated list of tags.
-          in: query
-          name: tag
-          schema:
-            items:
-              type: string
-            type: array
-        - description: Comma-separated list of token IDs.
-          in: query
-          name: token_id
-          schema:
-            items:
-              type: string
-            type: array
-        - description: The name of the collection containing the object.
-          in: path
-          name: collection
-          required: true
-          schema:
-            type: string
-        - $ref: '#/components/parameters/adhoc_reason'
-        - $ref: '#/components/parameters/reason'
-        - $ref: '#/components/parameters/reload_cache'
-      responses:
-        200:
-          content:
-            application/json:
-              schema:
-                items:
-                  $ref: '#/components/schemas/models.DetokenizedToken'
-                type: array
-          description: The request is successful.
-        400:
-          $ref: '#/components/responses/400'
-        401:
-          $ref: '#/components/responses/401'
-        403:
-          $ref: '#/components/responses/403'
-        404:
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/rest.HTTPError'
-          description: The collection, properties, referenced objects or token isn't found.
-        500:
-          $ref: '#/components/responses/500'
-        503:
-          $ref: '#/components/responses/503'
-      security:
-        - bearerAuth: []
-      tags:
-        - Tokens
-      x-docs-sidebar-precedence: 2
-    patch:
-      operationId: update-tokens
-      summary: Update tokens
-      x-text-ref-description: './data/UpdateTokens.md'
-      parameters:
-        - description: Token time to live (TTL) in seconds. If not set, the token's expiry date is not changed.
-          in: query
-          name: ttl
-          schema:
-            type: string
-            pattern: '^[0-9]*$'
-        - description: Comma-separated list of object IDs.
-          in: query
-          name: object_id
-          schema:
-            type: array
-            items:
-              type: string
-              format: uuid
-        - description: Comma-separated list of tags.
-          in: query
-          name: tag
-          schema:
-            items:
-              type: string
-            type: array
-        - description: Comma-separated list of token IDs.
-          in: query
-          name: token_id
-          schema:
-            items:
-              type: string
-            type: array
-        - description: |
-            Options for the operation. Options include:
-            - `deleted` – update only deleted tokens.
-          in: query
-          name: options
-          schema:
-            items:
-              type: string
-            type: array
-        - description: The name of the collection containing the object.
-          in: path
-          name: collection
-          required: true
-          schema:
-            type: string
-        - $ref: '#/components/parameters/adhoc_reason'
-        - $ref: '#/components/parameters/reason'
-        - $ref: '#/components/parameters/reload_cache'
-      requestBody:
-        x-has-pii: false
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/models.UpdateTokenRequest'
-        description: Update token request details.
-        required: true
-        x-originalParamName: body
-      responses:
-        200:
-          description: The request is successful.
-        400:
-          $ref: '#/components/responses/400'
-        401:
-          $ref: '#/components/responses/401'
-        403:
-          $ref: '#/components/responses/403'
-        404:
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/rest.HTTPError'
-          description: The collection, token, or referenced object or property was not found.
-        500:
-          $ref: '#/components/responses/500'
-        503:
-          $ref: '#/components/responses/503'
-      security:
-        - bearerAuth: []
-      tags:
-        - Tokens
-      x-docs-sidebar-precedence: 4
-    post:
-      operationId: tokenize
-      summary: Tokenize properties of an object data
-      x-text-ref-description: './data/Tokenize.md'
-      parameters:
-        - description: 'Token time to live (TTL) in seconds. If not set, the default TTL is used. See the `PVAULT_TTL_TOKENS` time to live environment variable.'
-          in: query
-          name: ttl
-          schema:
-            type: string
-            pattern: '^[0-9]*$'
-        - description: The name of the collection containing the object.
-          in: path
-          name: collection
-          required: true
-          schema:
-            type: string
-        - $ref: '#/components/parameters/adhoc_reason'
-        - $ref: '#/components/parameters/reason'
-        - $ref: '#/components/parameters/reload_cache'
-      requestBody:
-        x-has-pii: false
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/models.TokenizeRequest'
-        description: Details of the object and property.
-        required: true
-        x-originalParamName: object_prop
-      responses:
-        200:
-          content:
-            application/json:
-              schema:
-                items:
-                  $ref: '#/components/schemas/models.TokenValue'
-                type: array
-          description: The request is successful.
-        400:
-          $ref: '#/components/responses/400'
-        401:
-          $ref: '#/components/responses/401'
-        403:
-          $ref: '#/components/responses/403'
-        404:
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/rest.HTTPError'
-          description: The collection, properties or referenced objects isn't found.
-        500:
-          $ref: '#/components/responses/500'
-        503:
-          $ref: '#/components/responses/503'
-      security:
-        - bearerAuth: []
-      tags:
-        - Tokens
-      x-docs-sidebar-precedence: 1
-  /api/pvlt/1.0/data/collections/{collection}/rotate/tokens:
-    post:
-      operationId: rotate-tokens
-      summary: Rotate tokens
-      x-text-ref-description: './data/RotateTokens.md'
+      operationId: list-transformations
+      summary: List transformations
+      description: >-
+        Lists the transformations in a collection. See Manage transformations
+        for more information.
 
-      parameters:
-        - description: Comma-separated list of token IDs.
-          in: query
-          name: token_id
-          required: true
-          schema:
-            items:
-              type: string
-            type: array
-        - description: The name of the collection containing the object.
-          in: path
-          name: collection
-          required: true
-          schema:
-            type: string
-        - $ref: '#/components/parameters/adhoc_reason'
-        - $ref: '#/components/parameters/reason'
-        - $ref: '#/components/parameters/reload_cache'
+
+        The role that performs this operation must have the `CapSchemaReader` capability.
+
+        See [Access control](/data-security/identity-and-access-management#access-control) for more information about how
+
+        capabilities are used to control access to operations.
       responses:
-        200:
+        "200":
           content:
             application/json:
               schema:
                 items:
-                  $ref: '#/components/schemas/models.RotatedToken'
+                  $ref: "#/components/schemas/Transformation"
                 type: array
           description: The request is successful.
-        400:
-          $ref: '#/components/responses/400'
-        401:
-          $ref: '#/components/responses/401'
-        403:
-          $ref: '#/components/responses/403'
-        404:
+        "400":
+          $ref: "#/components/responses/400"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+        "404":
+          $ref: "#/components/responses/404"
+        "409":
+          $ref: "#/components/responses/409"
+        "500":
+          $ref: "#/components/responses/500"
+        "503":
+          $ref: "#/components/responses/503"
+      security:
+        - bearerAuth: []
+      tags:
+        - Data types and transformations
+      x-docs-sidebar-precedence: 7
+  /api/pvlt/1.0/ctl/types:
+    get:
+      operationId: list-data-types
+      summary: List property types
+      description: >-
+        Lists the Vault property types.
+
+
+        See Data types for more information.
+
+
+        The role that performs this operation must have the `CapSchemaReader` capability.
+
+        See [Access control](/data-security/identity-and-access-management#access-control) for more information about how
+
+        capabilities are used to control access to operations.
+      responses:
+        "200":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/rest.HTTPError'
-          description: The collection, token, or referenced object or property was not found.
-        500:
-          $ref: '#/components/responses/500'
-        503:
-          $ref: '#/components/responses/503'
+                items:
+                  $ref: "#/components/schemas/PIIType"
+                type: array
+          description: The request is successful.
+        "400":
+          $ref: "#/components/responses/400"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+        "404":
+          $ref: "#/components/responses/404"
+        "409":
+          $ref: "#/components/responses/409"
+        "500":
+          $ref: "#/components/responses/500"
+        "503":
+          $ref: "#/components/responses/503"
       security:
-        - bearerAuth: [ ]
-
+        - bearerAuth: []
       tags:
-        - Tokens
-      x-docs-sidebar-precedence: 5
+        - Data types and transformations
+      x-docs-sidebar-precedence: 8
   /api/pvlt/1.0/data/info/health:
     get:
       operationId: data-health
-      summary: Get data service status
-      x-text-ref-description: './data/Health.md'
+      summary: Get data service health/status
+      description: >-
+        Gets the status of the service.
+
+
+        The status codes returned follow the IETF standard [Health Check Response Format for HTTP APIs](https://datatracker.ietf.org/doc/html/draft-inadarei-api-health-check-05). For example, `pass` is returned when the service is up.
+
+
+        The role performing this operation must have the `CapDataReader` capability.
+
+        See [Access control](/data-security/identity-and-access-management#access-control) for more information about how
+
+        capabilities are used to control access to operations.
       responses:
-        200:
+        "200":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/models.Health'
+                $ref: "#/components/schemas/Health"
           description: The request is successful.
-        400:
-          $ref: '#/components/responses/400'
-        401:
-          $ref: '#/components/responses/401'
-        403:
-          $ref: '#/components/responses/403'
-        404:
-          $ref: '#/components/responses/404'
-        500:
-          $ref: '#/components/responses/500'
-        503:
-          $ref: '#/components/responses/503'
+        "400":
+          $ref: "#/components/responses/400"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+        "404":
+          $ref: "#/components/responses/404"
+        "409":
+          $ref: "#/components/responses/409"
+        "500":
+          $ref: "#/components/responses/500"
+        "503":
+          $ref: "#/components/responses/503"
       tags:
         - System
       x-docs-sidebar-precedence: 8
-  /api/pvlt/1.0/system/admin/keys/rotate:
-    post:
-      operationId: rotate-keys
-      summary: Rotate data encryption keys
-      x-text-ref-description: './control/RotateKeysets.md'
+  /api/pvlt/1.0/ctl/info/health:
+    get:
+      operationId: control-health
+      summary: Get control service health/status
+      description: >-
+        Gets the status of the service.
+
+
+        The status codes returned follow the IETF standard [Health Check Response Format for HTTP APIs](https://datatracker.ietf.org/doc/html/draft-inadarei-api-health-check-05). For example, `pass` is returned when the service is up.
       responses:
-        200:
-          description: The request is successful.
-        400:
-          $ref: '#/components/responses/400'
-        401:
-          $ref: '#/components/responses/401'
-        403:
-          $ref: '#/components/responses/403'
-        404:
-          $ref: '#/components/responses/404'
-        500:
-          $ref: '#/components/responses/500'
-        503:
-          $ref: '#/components/responses/503'
-      security:
-        - bearerAuth: []
-      tags:
-        - System
-  /api/pvlt/1.0/system/admin/lifecycle/gc:
-    post:
-      operationId: garbage-collection
-      summary: Purge expired and soft deleted objects and tokens
-      x-text-ref-description: './data/GarbageCollection.md'
-      parameters:
-        - description: 'Filter for the GC operation. Options include: `objects_only`,`tokens_only`.'
-          in: query
-          name: filter
-          schema:
-            default: all
-            enum:
-              - objects_only
-              - tokens_only
-              - all
-            type: string
-        - description: Runs dry run GC if set to true.
-          in: query
-          name: dry_run
-          schema:
-            default: false
-            type: boolean
-        - $ref: '#/components/parameters/adhoc_reason'
-        - $ref: '#/components/parameters/reason'
-        - $ref: '#/components/parameters/reload_cache'
-      responses:
-        200:
+        "200":
           content:
             application/json:
               schema:
-                items:
-                  $ref: '#/components/schemas/gc.DeletionCount'
-                type: array
+                $ref: "#/components/schemas/Health"
           description: The request is successful.
-        400:
-          $ref: '#/components/responses/400'
-        401:
-          $ref: '#/components/responses/401'
-        403:
-          $ref: '#/components/responses/403'
-        404:
-          $ref: '#/components/responses/404'
-        500:
-          $ref: '#/components/responses/500'
-        503:
-          $ref: '#/components/responses/503'
+        "400":
+          $ref: "#/components/responses/400"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+        "404":
+          $ref: "#/components/responses/404"
+        "409":
+          $ref: "#/components/responses/409"
+        "500":
+          $ref: "#/components/responses/500"
+        "503":
+          $ref: "#/components/responses/503"
+      tags:
+        - System
+      x-docs-sidebar-precedence: 9
+  /api/pvlt/1.0/ctl/info/cluster:
+    get:
+      operationId: get-cluster-info
+      summary: Get cluster information
+      description: >-
+        Get Cluster Information.
+
+
+        Returns the vault's generation and the generations of all the workers (data servers).
+
+
+        The role that performs this operation must have the `CapClusterInfoReader` capability.
+
+        See [Access control](/data-security/identity-and-access-management#access-control) for more information about how
+
+        capabilities are used to control access to operations.
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AllGenerations"
+          description: The request is successful.
+        "400":
+          $ref: "#/components/responses/400"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+        "404":
+          $ref: "#/components/responses/404"
+        "409":
+          $ref: "#/components/responses/409"
+        "500":
+          $ref: "#/components/responses/500"
+        "503":
+          $ref: "#/components/responses/503"
       security:
         - bearerAuth: []
       tags:
         - System
       x-docs-sidebar-precedence: 10
-  /api/pvlt/1.0/system/confvar:
-    delete:
-      operationId: clear-all-conf-vars
-      summary: Clear configuration variables
-      x-text-ref-description: './control/ClearAllConfVars.md'
-      responses:
-        200:
-          description: The request is successful.
-        400:
-          $ref: '#/components/responses/400'
-        401:
-          $ref: '#/components/responses/401'
-        403:
-          $ref: '#/components/responses/403'
-        404:
-          $ref: '#/components/responses/404'
-        500:
-          $ref: '#/components/responses/500'
-        503:
-          $ref: '#/components/responses/503'
-      security:
-        - bearerAuth: []
-      tags:
-        - Config Vars
-  /api/pvlt/1.0/system/confvar/{name}:
-    get:
-      operationId: get-conf-var
-      summary: Get configuration variable
-      x-text-ref-description: './control/GetConfVar.md'
+  /api/pvlt/1.0/system/admin/lifecycle/gc:
+    post:
+      operationId: garbage-collection
+      summary: Delete objects and tokens
+      description: >
+        Deletes archived objects and tokens that have been archived for longer
+        than the retention period.
+
+
+        See [Object life cycle](/data-privacy/object-lifecycle) for more information on how objects and tokens are archived and how deletion is affected by the retention period.
       parameters:
-        - description: The name of the configuration variable.
-          in: path
-          name: name
-          required: true
+        - description: |
+            Whether to delete objects, tokens, or both. Options are:
+            - `objects_only` – delete only objects.
+            - `tokens_only` – delete only tokens.
+            If not set, the default is both.
+          in: query
+          name: filter
           schema:
+            enum:
+              - objects_only
+              - tokens_only
             type: string
+        - description: Whether to respond with how many objects and tokens are available
+            for deletion, without deleting them.
+          in: query
+          name: dry_run
+          schema:
+            default: false
+            type: boolean
+        - $ref: "#/components/parameters/adhoc_reason"
+        - $ref: "#/components/parameters/reason"
+        - $ref: "#/components/parameters/reload_cache"
       responses:
-        200:
+        "200":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/models.ConfVar'
+                items:
+                  $ref: "#/components/schemas/gc.DeletionCount"
+                type: array
           description: The request is successful.
-        400:
-          $ref: '#/components/responses/400'
-        401:
-          $ref: '#/components/responses/401'
-        403:
-          $ref: '#/components/responses/403'
-        404:
-          $ref: '#/components/responses/404'
-        500:
-          $ref: '#/components/responses/500'
-        503:
-          $ref: '#/components/responses/503'
+        "400":
+          $ref: "#/components/responses/400"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+        "404":
+          $ref: "#/components/responses/404"
+        "409":
+          $ref: "#/components/responses/409"
+        "500":
+          $ref: "#/components/responses/500"
+        "503":
+          $ref: "#/components/responses/503"
       security:
         - bearerAuth: []
       tags:
-        - Config Vars
-    post:
-      operationId: set-conf-var
-      summary: Set configuration variable
-      x-text-ref-description: './control/SetConfVar.md'
-      parameters:
-        - description: The name of the configuration variable.
-          in: path
-          name: name
-          required: true
-          schema:
-            type: string
-      requestBody:
-        x-has-pii: false
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/models.ConfVarValue'
-        description: Value of the configuration.
-        required: true
-        x-originalParamName: value
-      responses:
-        200:
-          description: The request is successful.
-        400:
-          $ref: '#/components/responses/400'
-        401:
-          $ref: '#/components/responses/401'
-        403:
-          $ref: '#/components/responses/403'
-        404:
-          $ref: '#/components/responses/404'
-        500:
-          $ref: '#/components/responses/500'
-        503:
-          $ref: '#/components/responses/503'
-      security:
-        - bearerAuth: []
-      tags:
-        - Config Vars
+        - System
+      x-docs-sidebar-precedence: 10
   /api/pvlt/1.0/system/debug/error/trigger:
     post:
       operationId: trigger-error
       summary: Trigger an artificial error
-      x-text-ref-description: './control/Error.md'
+      description: >-
+        Manually trigger an artificial error for testing purposes.
+
+
+        The role that performs this operation must have the `CapErrorWriter` capability.
+
+        See [Access control](/data-security/identity-and-access-management#access-control) for more information about how
+
+        capabilities are used to control access to operations.
       responses:
-        400:
-          $ref: '#/components/responses/400'
-        401:
-          $ref: '#/components/responses/500'
-        403:
-          $ref: '#/components/responses/500'
-        404:
-          $ref: '#/components/responses/404'
-        500:
-          $ref: '#/components/responses/500'
-        503:
-          $ref: '#/components/responses/503'
+        "400":
+          $ref: "#/components/responses/400"
+        "401":
+          $ref: "#/components/responses/500"
+        "403":
+          $ref: "#/components/responses/500"
+        "404":
+          $ref: "#/components/responses/404"
+        "409":
+          $ref: "#/components/responses/409"
+        "500":
+          $ref: "#/components/responses/500"
+        "503":
+          $ref: "#/components/responses/503"
       security:
         - bearerAuth: []
       tags:
@@ -1794,26 +2130,36 @@ paths:
     get:
       operationId: get-configuration
       summary: Get system configuration
-      x-text-ref-description: './control/Configuration.md'
+      description: >-
+        Get the current active system configuration.
+
+
+        The role that performs this operation must have the `CapInfoReader` capability.
+
+        See [Access control](/data-security/identity-and-access-management#access-control) for more information about how
+
+        capabilities are used to control access to operations.
       responses:
-        200:
+        "200":
           content:
             application/toml:
               schema:
-                $ref: '#/components/schemas/config.Config'
+                $ref: "#/components/schemas/config.Config"
           description: The request is successful.
-        400:
-          $ref: '#/components/responses/400'
-        401:
-          $ref: '#/components/responses/401'
-        403:
-          $ref: '#/components/responses/403'
-        404:
-          $ref: '#/components/responses/404'
-        500:
-          $ref: '#/components/responses/500'
-        503:
-          $ref: '#/components/responses/503'
+        "400":
+          $ref: "#/components/responses/400"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+        "404":
+          $ref: "#/components/responses/404"
+        "409":
+          $ref: "#/components/responses/409"
+        "500":
+          $ref: "#/components/responses/500"
+        "503":
+          $ref: "#/components/responses/503"
       security:
         - bearerAuth: []
       tags:
@@ -1823,26 +2169,36 @@ paths:
     get:
       operationId: get-license
       summary: Get license
-      x-text-ref-description: './control/License.md'
+      description: >-
+        Gets information on the currently used license.
+
+
+        The role that performs this operation must have the `CapInfoReader` capability.
+
+        See [Access control](/data-security/identity-and-access-management#access-control) for more information about how
+
+        capabilities are used to control access to operations.
       responses:
-        200:
+        "200":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/models.License'
+                $ref: "#/components/schemas/License"
           description: The request is successful.
-        400:
-          $ref: '#/components/responses/400'
-        401:
-          $ref: '#/components/responses/401'
-        403:
-          $ref: '#/components/responses/403'
-        404:
-          $ref: '#/components/responses/404'
-        500:
-          $ref: '#/components/responses/500'
-        503:
-          $ref: '#/components/responses/503'
+        "400":
+          $ref: "#/components/responses/400"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+        "404":
+          $ref: "#/components/responses/404"
+        "409":
+          $ref: "#/components/responses/409"
+        "500":
+          $ref: "#/components/responses/500"
+        "503":
+          $ref: "#/components/responses/503"
       security:
         - bearerAuth: []
       tags:
@@ -1852,64 +2208,381 @@ paths:
     get:
       operationId: get-vault-version
       summary: Get Vault version
-      x-text-ref-description: './control/Version.md'
+      description: Gets the version of Vault.
       responses:
-        200:
+        "200":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/models.ProductVersion'
+                $ref: "#/components/schemas/ProductVersion"
           description: The request is successful.
-        400:
-          $ref: '#/components/responses/400'
-        401:
-          $ref: '#/components/responses/401'
-        403:
-          $ref: '#/components/responses/403'
-        404:
-          $ref: '#/components/responses/404'
-        500:
-          $ref: '#/components/responses/500'
-        503:
-          $ref: '#/components/responses/503'
+        "400":
+          $ref: "#/components/responses/400"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+        "404":
+          $ref: "#/components/responses/404"
+        "409":
+          $ref: "#/components/responses/409"
+        "500":
+          $ref: "#/components/responses/500"
+        "503":
+          $ref: "#/components/responses/503"
       security:
         - bearerAuth: []
       tags:
         - System
       x-docs-sidebar-precedence: 10
-  /api/pvlt/1.0/system/info/kms:
+  /api/pvlt/1.0/ctl/iam/conf:
     get:
-      operationId: get-kms
-      summary: Get KMS status
-      x-text-ref-description: './control/GetKMSStatus.md'
+      operationId: get-iam-conf
+      summary: Get IAM configuration
+      description: >-
+        Gets the identity and access management (IAM) configuration in TOML
+        format.
+
+
+        The role that performs this operation must have the `CapIAMReader` capability.
+
+        See [Access control](/data-security/identity-and-access-management#access-control) for more information about how
+
+        capabilities are used to control access to operations.
       responses:
-        200:
+        "200":
+          content:
+            application/toml:
+              schema:
+                $ref: "#/components/schemas/auth.Config"
+          description: The request is successful.
+        "400":
+          $ref: "#/components/responses/400"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+        "404":
+          $ref: "#/components/responses/404"
+        "409":
+          $ref: "#/components/responses/409"
+        "500":
+          $ref: "#/components/responses/500"
+        "503":
+          $ref: "#/components/responses/503"
+      security:
+        - bearerAuth: []
+      tags:
+        - IAM
+    post:
+      operationId: set-iam-conf
+      summary: Set IAM configuration
+      description: >-
+        Sets the identity and access management (IAM) configuration.
+
+
+        The role that performs this operation must have the `CapIAMWriter` capability.
+
+        See [Access control](/data-security/identity-and-access-management#access-control) for more information about how
+
+        capabilities are used to control access to operations.
+      requestBody:
+        x-has-pii: false
+        content:
+          application/toml:
+            schema:
+              $ref: "#/components/schemas/auth.Config"
+        description: IAM configuration in TOML format.
+        required: true
+        x-originalParamName: auth_config
+      responses:
+        "200":
+          description: The request is successful.
+        "400":
+          $ref: "#/components/responses/400"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+        "404":
+          $ref: "#/components/responses/404"
+        "409":
+          $ref: "#/components/responses/409"
+        "500":
+          $ref: "#/components/responses/500"
+        "503":
+          $ref: "#/components/responses/503"
+      security:
+        - bearerAuth: []
+      tags:
+        - IAM
+  /api/pvlt/1.0/ctl/iam/user/regen:
+    post:
+      operationId: regenerate-user-api-key
+      summary: Regenerate user API key
+      description: >-
+        Regenerates a user's API key. The existing API key is invalidated. This
+        operation is irreversible.
+
+
+        The role that performs this operation must have the `CapIAMWriter` capability.
+
+        See [Access control](/data-security/identity-and-access-management#access-control) for more information about how
+
+        capabilities are used to control access to operations.
+      requestBody:
+        x-has-pii: false
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserName"
+        description: The name of the user to regenerate API key for.
+        required: true
+      responses:
+        "200":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/models.KMSStatus'
+                $ref: "#/components/schemas/APIKey"
           description: The request is successful.
-        400:
-          $ref: '#/components/responses/400'
-        401:
-          $ref: '#/components/responses/401'
-        403:
-          $ref: '#/components/responses/403'
-        404:
-          $ref: '#/components/responses/404'
-        500:
-          $ref: '#/components/responses/500'
-        503:
-          $ref: '#/components/responses/503'
+        "400":
+          $ref: "#/components/responses/400"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/rest.HTTPError"
+          description: The user is not found.
+        "409":
+          $ref: "#/components/responses/409"
+        "500":
+          $ref: "#/components/responses/500"
+        "503":
+          $ref: "#/components/responses/503"
+      security:
+        - bearerAuth: []
+      tags:
+        - IAM
+  /api/pvlt/1.0/system/admin/keys/rotate:
+    post:
+      operationId: rotate-keys
+      summary: Rotate data encryption keys
+      description: >-
+        Rotates all the KMS keys that Vault uses to encrypt properties, tokens,
+        and more.
+
+
+        When the keys are rotated, new data is encrypted with the new key. All old keys are retained, so that content encrypted with previous keys can be decipherable.
+
+
+        The role that performs this operation must have the `CapKMSWriter` capability.
+
+        See [Access control](/data-security/identity-and-access-management#access-control) for more information about how
+
+        capabilities are used to control access to operations.
+      responses:
+        "200":
+          description: The request is successful.
+        "400":
+          $ref: "#/components/responses/400"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+        "404":
+          $ref: "#/components/responses/404"
+        "409":
+          $ref: "#/components/responses/409"
+        "500":
+          $ref: "#/components/responses/500"
+        "503":
+          $ref: "#/components/responses/503"
       security:
         - bearerAuth: []
       tags:
         - System
+  /api/pvlt/1.0/system/confvar:
+    delete:
+      operationId: clear-all-conf-vars
+      summary: Clear configuration variables
+      description: >-
+        Clears all dynamic configuration variables.
 
+
+        The role performing this operation must have the `CapConfvarWriter` capability.
+
+        See [Access control](/data-security/identity-and-access-management#access-control) for more information about how
+
+        capabilities are used to control access to operations.
+      responses:
+        "200":
+          description: The request is successful.
+        "400":
+          $ref: "#/components/responses/400"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+        "404":
+          $ref: "#/components/responses/404"
+        "409":
+          $ref: "#/components/responses/409"
+        "500":
+          $ref: "#/components/responses/500"
+        "503":
+          $ref: "#/components/responses/503"
+      security:
+        - bearerAuth: []
+      tags:
+        - Config Vars
+  "/api/pvlt/1.0/system/confvar/{name}":
+    get:
+      operationId: get-conf-var
+      summary: Get configuration variable
+      description: >-
+        Gets a dynamic configuration variable by name. The names of the
+        variables that may be obtained are:
+
+
+        - `log_level`
+
+
+        The role that performs this operation must have the `CapConfvarReader` capability.
+
+        See [Access control](/data-security/identity-and-access-management#access-control) for more information about how
+
+        capabilities are used to control access to operations.
+      parameters:
+        - description: The name of the configuration variable.
+          in: path
+          name: name
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ConfVar"
+          description: The request is successful.
+        "400":
+          $ref: "#/components/responses/400"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+        "404":
+          $ref: "#/components/responses/404"
+        "409":
+          $ref: "#/components/responses/409"
+        "500":
+          $ref: "#/components/responses/500"
+        "503":
+          $ref: "#/components/responses/503"
+      security:
+        - bearerAuth: []
+      tags:
+        - Config Vars
+    post:
+      operationId: set-conf-var
+      summary: Set configuration variable
+      description: >-
+        Sets a dynamic configuration variable by name. The names of the
+        variables that may be set are:
+
+
+        - `log_level` which can take the values of `debug`, `info`, `warn`, and `error`.
+
+
+        The role that performs this operation must have the `CapConfvarWriter` capability.
+
+        See [Access control](/data-security/identity-and-access-management#access-control) for more information about how
+
+        capabilities are used to control access to operations.
+      parameters:
+        - description: The name of the configuration variable.
+          in: path
+          name: name
+          required: true
+          schema:
+            type: string
+      requestBody:
+        x-has-pii: false
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ConfVarValue"
+        description: Value of the configuration.
+        required: true
+        x-originalParamName: value
+      responses:
+        "200":
+          description: The request is successful.
+        "400":
+          $ref: "#/components/responses/400"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+        "404":
+          $ref: "#/components/responses/404"
+        "409":
+          $ref: "#/components/responses/409"
+        "500":
+          $ref: "#/components/responses/500"
+        "503":
+          $ref: "#/components/responses/503"
+      security:
+        - bearerAuth: []
+      tags:
+        - Config Vars
+  /api/pvlt/1.0/system/info/kms:
+    get:
+      operationId: get-kms
+      summary: Get KMS status
+      description: >-
+        Gets the status of the configured KMS.
+
+
+        The role that performs this operation must have the `CapKMSReader` capability.
+
+        See [Access control](/data-security/identity-and-access-management#access-control) for more information about how
+
+        capabilities are used to control access to operations.
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/KMSStatus"
+          description: The request is successful.
+        "400":
+          $ref: "#/components/responses/400"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+        "404":
+          $ref: "#/components/responses/404"
+        "409":
+          $ref: "#/components/responses/409"
+        "500":
+          $ref: "#/components/responses/500"
+        "503":
+          $ref: "#/components/responses/503"
+      security:
+        - bearerAuth: []
+      tags:
+        - System
 components:
   parameters:
     jsonOrPvSchemaFormat:
-      description: When set to `pvschema`, returns the collection in the PVSchema format. Otherwise, returns the JSON format.
+      description: The format of the response. Overrides any `Accept` header value provided.
       in: query
       name: format
       schema:
@@ -1918,7 +2591,7 @@ components:
           - pvschema
           - json
         default: json
-    collection:
+    collection_name:
       description: The name of the collection.
       in: path
       name: collection
@@ -1926,14 +2599,25 @@ components:
       schema:
         type: string
         pattern: ^[a-zA-Z][a-zA-Z0-9_]*$
+      example: buyers
     page_size:
-      description: The maximum number of items to return in this request. If not specified, the default value is used. The default value is the value specified in the environment variable `PVAULT_SERVICE_DEFAULT_PAGE_SIZE`. The value must not exceed the value specified in the environment variable `PVAULT_SERVICE_DEFAULT_PAGE_SIZE`
+      description: The maximum number of items to return in this request. If not
+        specified, the default value is used. The default value is the value
+        specified in the environment variable
+        `PVAULT_SERVICE_DEFAULT_PAGE_SIZE`. The value must not exceed the value
+        specified in the environment variable `PVAULT_SERVICE_DEFAULT_PAGE_SIZE`
       in: query
       name: page_size
       schema:
         type: integer
     cursor:
-      description: 'The cursor represents the state of consecutive queries for the same request parameters. In the first call, the cursor may be omitted or specified as an empty string. In consecutive calls, it should be set to the value of the cursor field of the models.ObjectFieldsPage returned by the previous call. Note: when the `id` is specified, paging is not supported. In this case, if the number of `id` values specified exceeds the maximum page size, the method returns 400 (BAD REQUEST).'
+      description: "The cursor represents the state of consecutive queries for the
+        same request parameters. In the first call, the cursor may be omitted or
+        specified as an empty string. In consecutive calls, it should be set to
+        the value of the cursor field of the objectFieldsPage returned by the
+        previous call. Note: when the `id` is specified, paging is not
+        supported. In this case, if the number of `id` values specified exceeds
+        the maximum page size, the method returns 400 (BAD REQUEST)."
       in: query
       name: cursor
       schema:
@@ -1946,7 +2630,9 @@ components:
         type: string
     reason:
       name: reason
-      description: Details of the reason for requesting the property. The default is set when no access reason is provided and PVAULT_SERVICE_FORCE_ACCESS_REASON is false.
+      description: Details of the reason for requesting the property. The default is
+        set when no access reason is provided and
+        PVAULT_SERVICE_FORCE_ACCESS_REASON is false.
       in: query
       required: true
       schema:
@@ -1968,93 +2654,113 @@ components:
       in: query
       schema:
         type: boolean
+    trans_param:
+      name: X-Trans-Param
+      description: Extra parameter to pass on to the transformations.
+      in: header
+      schema:
+        type: string
   responses:
-    400:
+    "400":
       description: The request is invalid.
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/rest.HTTPError'
+            $ref: "#/components/schemas/rest.HTTPError"
           example:
             error_code: PV1001
             message: The access reason is missing.
             context:
-              reason: null
-    401:
+              ? reason
+    "401":
       description: Authentication credentials are incorrect or missing.
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/rest.HTTPError'
+            $ref: "#/components/schemas/rest.HTTPError"
           example:
             error_code: PV1005
             message: The request is unauthorized.
             context: {}
-    403:
+    "403":
       description: The caller doesn't have the required access rights.
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/rest.HTTPError'
+            $ref: "#/components/schemas/rest.HTTPError"
           example:
             error_code: PV1007
             message: The operation is forbidden due to missing capabilities.
             context:
               username: WebServer
-    404:
+    "404":
       description: The requested resource is not found.
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/rest.HTTPError'
+            $ref: "#/components/schemas/rest.HTTPError"
           example:
             error_code: PV1004
             message: The collection is not found.
             context: {}
-    500:
-      description: An error occurred on the server.
+    "409":
+      description: A conflict occurs.
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/rest.HTTPError'
+            $ref: "#/components/schemas/rest.HTTPError"
+          example:
+            error_code: PV3218
+            message: Concurrent conflicting updates to the same object.
+            context: {}
+    "500":
+      description: An error occurs on the server.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/rest.HTTPError"
           example:
             error_code: PV1000
             message: Something went wrong
             context: {}
-    501:
+    "501":
       description: Not implemented.
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/rest.HTTPError'
+            $ref: "#/components/schemas/rest.HTTPError"
           example:
             error_code: PV2001
             message: This operation is not implemented.
             context: {}
-    503:
+    "503":
       description: The service is unavailable.
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/rest.HTTPError'
+            $ref: "#/components/schemas/rest.HTTPError"
           example:
             error_code: PV1009
             message: The operation timed out on the server.
             context: {}
   schemas:
-    models.ObjectID:
+    ObjectID:
       type: object
       additionalProperties: false
       properties:
         _id:
           type: string
           format: uuid
-    models.UserName:
+      required:
+        - _id
+    UserName:
       type: object
       additionalProperties: false
       properties:
         name:
           type: string
+      required:
+        - name
     auth.Config:
       type: object
       additionalProperties: false
@@ -2062,15 +2768,19 @@ components:
         policies:
           type: object
           additionalProperties:
-            $ref: '#/components/schemas/auth.Policy'
+            $ref: "#/components/schemas/auth.Policy"
         roles:
           type: object
           additionalProperties:
-            $ref: '#/components/schemas/auth.Role'
+            $ref: "#/components/schemas/auth.Role"
         users:
           type: object
           additionalProperties:
-            $ref: '#/components/schemas/auth.User'
+            $ref: "#/components/schemas/auth.User"
+      required:
+        - policies
+        - roles
+        - users
     auth.Policy:
       type: object
       additionalProperties: false
@@ -2089,6 +2799,11 @@ components:
           type: array
           items:
             type: string
+      required:
+        - operations
+        - policyType
+        - reasons
+        - resources
     auth.Role:
       type: object
       additionalProperties: false
@@ -2101,6 +2816,9 @@ components:
           type: array
           items:
             type: string
+      required:
+        - capabilities
+        - policies
     auth.User:
       type: object
       additionalProperties: false
@@ -2109,28 +2827,41 @@ components:
           type: boolean
         role:
           type: string
+      required:
+        - disabled
+        - role
     config.Config:
       type: object
       additionalProperties: false
       properties:
         db:
-          $ref: '#/components/schemas/config.DB'
+          $ref: "#/components/schemas/config.DB"
         devmode:
           type: boolean
         features:
-          $ref: '#/components/schemas/config.Features'
+          $ref: "#/components/schemas/config.Features"
         kms:
-          $ref: '#/components/schemas/config.KMS'
+          $ref: "#/components/schemas/config.KMS"
         log:
-          $ref: '#/components/schemas/config.Log'
+          $ref: "#/components/schemas/config.Log"
         sentry:
-          $ref: '#/components/schemas/config.Sentry'
+          $ref: "#/components/schemas/config.Sentry"
         service:
-          $ref: '#/components/schemas/config.Service'
+          $ref: "#/components/schemas/config.Service"
         tls:
-          $ref: '#/components/schemas/config.TLS'
-        ttl:
-          $ref: '#/components/schemas/config.TTL'
+          $ref: "#/components/schemas/config.TLS"
+        expiration:
+          $ref: "#/components/schemas/config.Expiration"
+      required:
+        - db
+        - devmode
+        - features
+        - kms
+        - log
+        - sentry
+        - service
+        - tls
+        - expiration
     config.DB:
       type: object
       additionalProperties: false
@@ -2138,15 +2869,19 @@ components:
         conn_max_lifetime_minutes:
           type: integer
         gc:
-          $ref: '#/components/schemas/config.GC'
+          $ref: "#/components/schemas/config.GC"
         hostname:
           type: string
         max_idle_conns:
           type: integer
         max_open_conns:
           type: integer
+        max_string_length:
+          type: integer
+        max_blob_length:
+          type: integer
         migration:
-          $ref: '#/components/schemas/config.Migration'
+          $ref: "#/components/schemas/config.Migration"
         name:
           type: string
         password:
@@ -2157,6 +2892,18 @@ components:
           type: boolean
         user:
           type: string
+      required:
+        - conn_max_lifetime_minutes
+        - gc
+        - hostname
+        - max_idle_conns
+        - max_open_conns
+        - migration
+        - name
+        - password
+        - port
+        - require_tls
+        - user
     config.Features:
       type: object
       additionalProperties: false
@@ -2165,28 +2912,45 @@ components:
           type: boolean
         encryption:
           type: boolean
+        encryption_disable_ad:
+          type: boolean
+          x-internal: true
         policy_enforcement:
           type: boolean
         mask_license:
           type: boolean
+        custom_types_enable:
+          type: boolean
+      required:
+        - api_key_hashing
+        - encryption
+        - encryption_disable_ad
+        - policy_enforcement
+        - mask_license
+        - custom_types_enable
     config.GC:
       type: object
       additionalProperties: false
       properties:
         batch_size:
           type: integer
-        grace_period_days:
+        retention_period_days:
           type: integer
+      required:
+        - batch_size
+        - retention_period_days
     config.KMS:
       type: object
       additionalProperties: false
       properties:
-        cache_enable:
-          type: boolean
         seed:
           type: string
         uri:
           type: string
+      required:
+        - cache_enable
+        - seed
+        - uri
     config.Log:
       type: object
       additionalProperties: false
@@ -2203,6 +2967,13 @@ components:
           type: string
         level:
           type: string
+      required:
+        - customer_env
+        - customer_identifier
+        - datadog_apm_enable
+        - datadog_enable
+        - datadog_env
+        - level
     config.Migration:
       type: object
       additionalProperties: false
@@ -2217,12 +2988,20 @@ components:
           type: integer
         max_wait_between_retries:
           type: integer
+      required:
+        - auto_run
+        - enable_retries
+        - initial_wait_between_retries
+        - max_retries
+        - max_wait_between_retries
     config.Sentry:
       type: object
       additionalProperties: false
       properties:
         enable:
           type: boolean
+      required:
+        - enable
     config.Service:
       type: object
       additionalProperties: false
@@ -2242,9 +3021,19 @@ components:
         timeout_seconds:
           type: number
         cache_refresh_interval_seconds:
-          type: number
+          type: integer
         license:
           type: string
+      required:
+        - admin_api_key
+        - admin_may_read_data
+        - default_page_size
+        - force_access_reason
+        - listen_addr
+        - max_page_size
+        - timeout_seconds
+        - cache_refresh_interval_seconds
+        - license
     config.TLS:
       type: object
       additionalProperties: false
@@ -2257,7 +3046,12 @@ components:
           type: string
         selfsigned:
           type: boolean
-    config.TTL:
+      required:
+        - cert_file
+        - enable
+        - key_file
+        - selfsigned
+    config.Expiration:
       type: object
       additionalProperties: false
       properties:
@@ -2267,17 +3061,36 @@ components:
           type: integer
         unassociated_objects:
           type: integer
+      required:
+        - associated_objects
+        - tokens
+        - unassociated_objects
     gc.DeletionCount:
       type: object
       additionalProperties: false
       properties:
         collection_name:
           type: string
+          description: The name of the collection containing the objects or tokens to
+            delete.
+          example: Tokens
         collection_type:
           type: string
+          description: The type of the collection.
+          example: TOKENS
+          enum:
+            - DATA
+            - PERSONS
+            - TOKENS
         count:
           type: integer
-    models.Collection:
+          description: The number of items deleted.
+          example: "634"
+      required:
+        - collection_name
+        - collection_type
+        - count
+    Collection:
       type: object
       additionalProperties: false
       properties:
@@ -2285,22 +3098,22 @@ components:
           type: string
           format: date-time
           readOnly: true
-          description: The time when the collection was created in an RFC3339 format.
-          example: '2022-07-05T08:47:12.047Z'
+          description: The time when the collection was created, in RFC3339 format.
+          example: 2022-07-05T08:47:12.047Z
         modification_time:
           type: string
           format: date-time
           readOnly: true
-          description: The time when the collection was last modified in an RFC3339 format.
-          example: '2022-07-05T08:47:12.047Z'
+          description: The time when the collection was last modified, in RFC3339 format.
+          example: 2022-07-05T08:47:12.047Z
         name:
           type: string
           description: The name of the collection.
-          example: employees
+          example: buyers
         properties:
           type: array
           items:
-            $ref: '#/components/schemas/models.Property'
+            $ref: "#/components/schemas/Property"
         type:
           type: string
           description: The schema prototype the collection is based on.
@@ -2310,8 +3123,16 @@ components:
           example: PERSONS
       required:
         - name
+        - properties
         - type
-    models.ConfVar:
+    Collection.pvschema:
+      type: string
+      additionalProperties: false
+      example: |-
+        buyers PERSONS (
+          buyer_name STRING ENCRYPTED COMMENT 'The name of the buyer.'
+        );
+    ConfVar:
       type: object
       additionalProperties: false
       properties:
@@ -2321,7 +3142,13 @@ components:
           type: string
         value:
           description: The value of the configuration variable.
-    models.License:
+        default_value:
+          description: The default value of the configuration variable.
+      required:
+        - name
+        - value
+        - default_value
+    License:
       type: object
       additionalProperties: false
       properties:
@@ -2330,33 +3157,36 @@ components:
           type: string
         expiration:
           description: The expiration date of the token in an RFC3339 format.
-          example: '2022-07-05T08:47:12.047Z'
+          example: 2022-07-05T08:47:12.047Z
           type: string
           format: date-time
-    models.ConfVarValue:
+      required:
+        - key
+        - expiration
+    ConfVarValue:
       type: object
       additionalProperties: false
       properties:
         value:
           description: The value of the configuration variable.
-    models.ConfigurationDoc:
-      description: Additional information about the transformation, as key-value pairs.
-      type: object
-      additionalProperties: false
-      properties:
-        non_masked_length:
-          description: Example transformation control key, in this case controlling the number of characters not masked in a data type.
-          example: 4
-          type: integer
-    models.DetokenizedToken:
+      required:
+        - value
+    DetokenizedToken:
       type: object
       additionalProperties: false
       properties:
         fields:
-          $ref: '#/components/schemas/models.ObjectFields'
+          $ref: "#/components/schemas/ObjectFields"
         token_id:
+          description: The token ID.
           type: string
-    models.Health:
+          example: 49303e72-35e3-11ed-a261-0242ac120002
+        metadata:
+          $ref: "#/components/schemas/TokenMetadata"
+      required:
+        - fields
+        - token_id
+    Health:
       type: object
       additionalProperties: false
       properties:
@@ -2364,7 +3194,9 @@ components:
           description: The status of the service.
           example: pass
           type: string
-    models.KMSStatus:
+      required:
+        - status
+    KMSStatus:
       type: object
       additionalProperties: false
       properties:
@@ -2372,7 +3204,9 @@ components:
           description: The type of the configured KMS
           example: AWS
           type: string
-    models.Object:
+      required:
+        - name
+    Object:
       type: object
       additionalProperties: true
       example:
@@ -2382,13 +3216,7 @@ components:
         foreign_id: ff5ced0b-0788-4cfa-8235-76e6098f11cb
         gender: Female
         last_name: Far
-        other_emails:
-          - pf@example.com
-          - pfar@example.com
-        other_phone_numbers:
-          - +120220202020
-          - +130330303030
-        phone_number: +110110101010
+        phone_number: 110110101010
         tenant_id: 6168d7c6-ee0d-4b63-8efb-24a8ca361fb4
         zip_code_us: 10101
       properties:
@@ -2397,10 +3225,12 @@ components:
           example: b86718a3-f4a7-4e40-bb59-681f22b62649
           readOnly: true
           type: string
-    models.ObjectFields:
+    ObjectFields:
       type: object
+      example:
+        credit_card_no: 1234432112344321
       additionalProperties: true
-    models.ObjectFieldsPage:
+    ObjectFieldsPage:
       type: object
       additionalProperties: false
       properties:
@@ -2408,75 +3238,91 @@ components:
           description: The page objects.
           type: array
           items:
-            $ref: '#/components/schemas/models.ObjectFields'
+            $ref: "#/components/schemas/ObjectFields"
         paging:
-          $ref: '#/components/schemas/models.Paging'
-    models.Paging:
+          $ref: "#/components/schemas/Paging"
+      required:
+        - results
+        - paging
+    Paging:
       description: Pagination information.
       type: object
       additionalProperties: false
       properties:
         size:
-          type: number
+          type: integer
           description: Number of results in the current page.
         remaining_count:
-          type: number
-          description: The remaining number of objects that can be read in ensuing calls to this method.
+          type: integer
+          description: The remaining number of objects that can be read in ensuing calls
+            to this method.
         cursor:
           type: string
           description: An opaque string you should provide to get the next page.
-    models.ProductVersion:
+      required:
+        - size
+        - remaining_count
+        - cursor
+    ProductVersion:
       type: object
       additionalProperties: false
       properties:
         db_schema_version:
           type: integer
         vault_id:
-          example: '1525298622245191836'
+          example: "1525298622245191836"
           type: string
         vault_version:
-          description: The version of a Vault specified as a string consisting of version number, build number, and edition.
+          description: The version of a Vault specified as a string consisting of version
+            number, build number, and edition.
           example: 0.9.5.1-g2be0eb7e
           type: string
-    models.Property:
+      required:
+        - db_schema_version
+        - vault_id
+        - vault_version
+    Property:
       type: object
       additionalProperties: false
       properties:
         creation_time:
-          description: The time when the property was created in an RFC3339 format.
-          example: '2022-07-05T08:47:12.047Z'
+          description: The time when the property was created, in RFC3339 format.
+          example: 2022-07-05T08:47:12.047Z
           readOnly: true
           type: string
           format: date-time
         description:
-          description: The description of the property, If not provided, is set to an empty String.
-          example: The object's middle name.
+          description: The description of the property. If not provided, is set to an
+            empty `string`.
+          example: The name of the buyer.
           type: string
         is_builtin:
           default: false
-          description: Whether the property is created by Vault (or by the user)
-          example: true
+          description: Whether the property is created by Vault (or by the user).
+          example: false
           type: boolean
           readOnly: true
         is_encrypted:
-          default: false
-          description: Whether the value is stored encrypted and decrypted when retrieved by a caller. Encryption provides extra protection against a malicious actor gaining access to the backend storage.
+          default: true
+          description: Whether the value is stored encrypted.
           example: true
           type: boolean
         is_index:
           default: false
-          description: Whether the backend storage is optimized for searches on this value.
+          description: Whether the backend storage is optimized for searches on this
+            property.
           example: false
           type: boolean
         is_nullable:
           default: false
-          description: Whether the value of the field can be removed (set to null).
-          example: true
+          description: Whether the value of the property can be removed (set to null).
+          example: false
           type: boolean
         is_readonly:
           default: false
-          description: When is_builtin is true, whether the user can modify values of this property.
-          example: true
+          description: Whether the user can modify values of this property. Ignored for
+            user define properties.
+          example: false
           type: boolean
           readOnly: true
         is_unique:
@@ -2485,91 +3331,105 @@ components:
           example: false
           type: boolean
         modification_time:
-          description: The time when the property was last modified in an RFC3339 format.
-          example: '2022-07-05T08:47:12.047Z'
+          description: The time when the property was last modified, in RFC3339 format.
+          example: 2022-07-05T08:47:12.047Z
           readOnly: true
           type: string
           format: date-time
         name:
-          description: The name of the property. This is the name of the column in the data_{collection_name} table. Must be unique.
-          example: middle_name
+          description: The name of the property. Must be unique.
+          example: buyer_name
           type: string
         pii_type_name:
-          description: The name of the property type.
+          description: The name of the data type of the property.
           example: STRING
           type: string
       required:
         - name
         - pii_type_name
-    models.Query:
+    Query:
       type: object
       additionalProperties: false
       properties:
         match:
-          $ref: '#/components/schemas/models.QueryMap'
-    models.QueryMap:
+          $ref: "#/components/schemas/QueryMap"
+      required:
+        - match
+    QueryMap:
       type: object
       additionalProperties: true
-    models.QueryToken:
+    QueryToken:
       type: object
       additionalProperties: false
       properties:
-        object_id:
-          description: Object IDs to query.
-          type: array
+        object_ids:
+          description: Comma-separated list of object IDs.
           items:
             type: string
             format: uuid
-        token_id:
-          description: Token IDs to query.
+            example: 463a83d0-a816-4902-abba-2486e0c0a0bb
           type: array
+        token_ids:
+          description: Comma-separated list of token IDs.
           items:
             type: string
-        tag:
-          description: tags to query.
+            example: 49303e72-35e3-11ed-a261-0242ac120002
           type: array
+        tags:
+          description: Comma-separated list of tags.
           items:
             type: string
-    models.RotatedToken:
+            example: credit_cards
+          type: array
+    RotatedTokens:
       type: object
-      additionalProperties: false
-      properties:
-        new_token_id:
-          type: string
-        old_token_id:
-          type: string
-    models.TokenAggregatedMetadata:
+      description: Mapping between old token IDs and new token IDs.
+      example:
+        49303e72-35e3-11ed-a261-0242ac120002: 463a83d0-a816-4902-abba-2486e0c0a0bb
+      additionalProperties:
+        type: string
+    TokenAggregatedMetadata:
       type: object
       additionalProperties: false
       properties:
         max_effective_expiration_time:
           description: Latest expiry of all tokens with the token ID (UTC).
           type: string
+          nullable: true
           format: date-time
-    models.TokenMetadata:
+    TokenMetadata:
       type: object
       additionalProperties: false
       properties:
         agg:
-          $ref: '#/components/schemas/models.TokenAggregatedMetadata'
+          $ref: "#/components/schemas/TokenAggregatedMetadata"
         reusable_token_id:
-          description: ID reusability status of the tokens.
+          description: Whether the token ID can be reused.
           type: boolean
         reversible:
-          description: Whether the token is reversible or not.
+          description: Whether the tokens are reversible.
           type: boolean
         scope:
           description: The scope of the tokens.
           type: string
+          example: default
         token_id:
           description: The shared ID of the tokens.
           type: string
+          example: 49303e72-35e3-11ed-a261-0242ac120002
         tokens:
-          description: Metadata for the each token.
+          description: The metadata for each token.
           type: array
           items:
-            $ref: '#/components/schemas/models.TokenRefMetadata'
-    models.TokenRefMetadata:
+            $ref: "#/components/schemas/TokenRefMetadata"
+      required:
+        - agg
+        - reusable_token_id
+        - reversible
+        - scope
+        - token_id
+        - tokens
+    TokenRefMetadata:
       type: object
       additionalProperties: false
       properties:
@@ -2578,133 +3438,183 @@ components:
           type: string
           format: date-time
         effective_expiration_time:
-          description: Effective expiry time of the token (UTC).
+          description: Effective expiry time of the token (UTC), being the earliest of the
+            expiry time of the token or the object owning the token, if any.
           type: string
+          nullable: true
           format: date-time
         expiration_time:
           description: Expiry time of the token (UTC).
           type: string
+          nullable: true
           format: date-time
         object_id:
-          description: The object of which the was were tokenized.
+          description: The object this token is for.
           type: string
           format: uuid
         tags:
-          description: Tags attached to the token.
+          description: >
+            Tags associated with the token.
+
+            When token ID is reused, this is all the tags from the tokens that share the ID.
           type: array
           items:
             type: string
-    models.TokenValue:
+            example: credit_cards
+      required:
+        - creation_time
+        - effective_expiration_time
+        - expiration_time
+        - object_id
+        - tags
+    TokenValue:
       type: object
       additionalProperties: false
       properties:
         token_id:
-          description: The value of the token.
+          description: The ID of the token.
           type: string
+          example: de15a638-354a-11ed-a261-0242ac120002
       required:
         - token_id
-    models.TokenizeRequest:
+    TokenizeRequest:
       type: object
       additionalProperties: false
       properties:
         fpprops:
-          description: Format preserving properties names to be used by the template for the ID generation.
+          description: >
+            Properties used by the format preserving template for the ID
+            generation. The templates require these properties:
+
+            - the `primary_account_number` template requires a property of type `CC_NUMBER`. The token ID is generated from this property by retaining the first six and last four digits and randomizing the remaining digits.
           items:
             type: string
+            example: credit_card_no
           type: array
         fptemplate:
-          description: Format preserving template to use. Keep empty to use UUID.
+          description: >
+            The template used to format the generated ID. Supports: 
+
+            - `primary_account_number` that generates an ID that is a valid 16-digit PAN (credit card number).
+
+            If empty, the format of the ID is a UUID.
+          enum:
+            - primary_account_number
           type: string
         object_ids:
-          description: Object IDs to tokenize.
+          description: A list of object IDs to create tokens for.
           items:
             type: string
             format: uuid
           type: array
         props:
-          description: The properties to tokenize.
+          description: A list of the properties to tokenize.
           items:
             type: string
+            example: credit_card_no
           type: array
         reuse_token_id:
           default: false
-          description: Whether the token ID can be reused if tokenizing the same data.
+          description: >
+            Whether to reuse token IDs. 
+
+            - When set to true, check and return an existing token in the same collection if one exists and satisfies these conditions: it is a reusable token, it was created with the same values and the same scopes. 
+
+            - When set to false, or when the aforementioned token is not found, create a new reusable token. 
+
+            Applies only to `VALUE` tokens.
           type: boolean
         reversible:
           default: true
-          description: Whether the token can be detokenized.
+          description: Whether the tokens can be detokenized.
           type: boolean
         scope:
           default: default
-          description: Uniqueness scope of the token.
+          description: A classification for the tokens.
           type: string
         tags:
-          description: Tags to attach to the token (max 10).
+          description: |
+            Tags to attach to the tokens. Maximum 10.
           items:
             type: string
+            example: credit_cards
           type: array
+          maximum: 10
         type:
-          description: Token type.
+          description: >
+            The type of tokens to create:
+
+            - `VALUE` for tokens that represent the property values as they were when the token was created.
+
+            - `POINTER` for tokens that represent the property values as they are when the request to detokenize is made.
           enum:
-            - pointer
-            - value
+            - POINTER
+            - VALUE
           type: string
       required:
         - object_ids
         - props
         - type
-    models.TransformationDoc:
-      description: 'Details of a transformation that can be performed on a PII data type within a collection. Note: `pii_type_id` and `name` together are also a unique identifier of a transformation in a collection.'
+    Transformation:
+      description: Details of a transformation that can be performed on a PII data
+        type within a collection.
       type: object
       additionalProperties: false
       properties:
-        configuration:
-          $ref: '#/components/schemas/models.ConfigurationDoc'
         name:
           description: The name of the transformation.
           example: mask
           type: string
         pii_type_name:
-          description: The name of the PII type.
+          description: The name of the PII type to which the transformation can be applied.
           example: email
-          readOnly: true
           type: string
-    models.UpdateTokenRequest:
+      required:
+        - name
+        - pii_type_name
+    UpdateTokenRequest:
       type: object
       additionalProperties: false
       properties:
         tags:
-          description: Replacement tags for the token.
+          description: Replacement tags for the tokens.
           items:
             type: string
+            example: credit_cards
           type: array
-    piitype.PIIType:
+      required:
+        - tags
+    PIIType:
       type: object
       additionalProperties: false
       properties:
         description:
           description: The description of the PII type.
           example: a string of up to 450 characters
-          readOnly: true
           type: string
         name:
           description: The name of the PII type.
           example: STRING
-          readOnly: true
           type: string
-    models.AllGenerations:
+      required:
+        - description
+        - name
+    AllGenerations:
       type: object
       additionalProperties: false
       properties:
         vault:
-          $ref: '#/components/schemas/models.VaultGeneration'
+          $ref: "#/components/schemas/VaultGeneration"
         workers:
           description: Workers generations.
           type: array
           items:
-            $ref: '#/components/schemas/models.Worker'
-    models.VaultGeneration:
-      description: 'Vault Generation.'
+            $ref: "#/components/schemas/Worker"
+      required:
+        - vault
+        - workers
+    VaultGeneration:
+      description: Vault Generation.
       type: object
       additionalProperties: false
       properties:
@@ -2715,8 +3625,11 @@ components:
           description: Modified at.
           type: string
           format: date-time
-    models.Worker:
-      description: 'Worker.'
+      required:
+        - generation_number
+        - modified_at
+    Worker:
+      description: Worker.
       type: object
       additionalProperties: false
       properties:
@@ -2726,48 +3639,79 @@ components:
         generation_number:
           description: Generation number.
           type: integer
-        modified_at:
+        generation_checked_at:
           description: Modified at.
           type: string
           format: date-time
         refresh_interval_seconds:
           description: Refresh interval in seconds.
           type: integer
-    models.APIKey:
+      required:
+        - worker_id
+        - generation_number
+        - generation_checked_at
+        - refresh_interval_seconds
+    APIKey:
       type: object
       additionalProperties: false
       properties:
         api_key:
           description: The new API key generated for the user.
-          example: 'some_user'
+          example: some_user
           type: string
         api_key_expiry:
           description: The expiry time of the API key.
-          example: '2022-07-05T08:47:12.047Z'
+          example: 2022-07-05T08:47:12.047Z
           type: string
           format: date-time
+      required:
+        - api_key
+        - api_key_expiry
     rest.HTTPError:
       type: object
       additionalProperties: false
       properties:
         context:
+          description: The error context.
+          example:
+            objectid: b56dd6aa-35f0-11ed-a261-0242ac120002
           type: object
           additionalProperties:
             type: string
-          description: The error context.
-          example:
-            object_id: abc
         error_code:
           description: The error code.
-          example: 'PVxxxx'
+          example: PVxxxx
           type: string
         message:
           description: The error message.
-          example: 'The object is not found.'
+          example: The object is not found.
           type: string
+      required:
+        - context
+        - error_code
+        - message
   securitySchemes:
     bearerAuth:
       bearerFormat: JWT
       scheme: bearer
       type: http
-      x-text-ref-description: '../bearer-auth.md'
+      description: >
+        ---
+
+        sidebar_position: 2
+
+        sidebar_label: Authentication
+
+        ---
+
+
+        # Authenticate with a Bearer authorization header
+
+
+        The Piiano Vault REST API uses API keys to authenticate and authorize requests. It accepts Bearer tokens in the HTTP `Authorization` header using the `Bearer <api-key>` scheme.
+
+
+        To obtain an API key, use the regenerate user API key [REST API operation](/api/operations/regenerate-user-api-key) or [CLI command](/cli/reference#regenerate-user-api-key).
+
+
+        See [Manage users and policies](/guides/manage-users-and-policies) to learn more about how Vault controls access to operations and data.

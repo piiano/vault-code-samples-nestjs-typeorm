@@ -58,7 +58,7 @@ describe('UsersService', function () {
     -e PVAULT_DEVMODE=true \
     -e PVAULT_SERVICE_LICENSE=${process.env.PVAULT_SERVICE_LICENSE} \
     -d \
-    piiano/pvault-dev:0.9.6`,
+    piiano/pvault-dev:1.0.2`,
     );
     await utils.run(`sleep 5`);
 
@@ -78,7 +78,7 @@ describe('UsersService', function () {
     await utils.run('docker rm -f pvault-dev');
   });
 
-  it('insert-get-delete"', async () => {
+  it('insert-get-delete', async () => {
     // Insert user.
     const originalUser = {
       country: 'NL',
@@ -88,8 +88,7 @@ describe('UsersService', function () {
     } as UserCreateInput;
 
     const user = await service.create({ ...originalUser });
-    const userId = user['_id'].toString();
-
+    const userId = user['id'].toString();
     const storedUser = await repo.findOne(userId);
     // Make sure that the user's country (non-protected) is stored as clear-text.
     expect(storedUser?.country).to.equal(originalUser.country);
@@ -170,7 +169,7 @@ describe('UsersService', function () {
       },
     };
     await service.updateById(
-      user['_id'].toString(),
+      user['id'].toString(),
       plainToClass(UpdateUserDto, { ...toUpdate }),
     );
 
@@ -186,7 +185,7 @@ describe('UsersService', function () {
     // Make sure that the email is still a UUID, which means it's a token.
     expect(results[0].contact.email).to.be.a.uuid('v4');
     // Make sure that fetching the user with the service returns the original user.
-    const fetchedUser = await service.findById(user['_id'].toString());
+    const fetchedUser = await service.findById(user['id'].toString());
     expectEqualEntities(fetchedUser, toUpdate);
   });
 });

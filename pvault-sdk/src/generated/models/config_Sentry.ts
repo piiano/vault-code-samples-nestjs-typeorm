@@ -3,6 +3,6 @@
 /* eslint-disable */
 
 export type config_Sentry = {
-    enable?: boolean;
+    enable: boolean;
 };
 

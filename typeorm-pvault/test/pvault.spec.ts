@@ -77,7 +77,7 @@ describe("Pvault", function () {
     -e PVAULT_DEVMODE=true \
     -e PVAULT_SERVICE_LICENSE=${process.env.PVAULT_SERVICE_LICENSE} \
     -d \
-    piiano/pvault-dev:0.9.6`
+    piiano/pvault-dev:1.0.2`
     );
     await utils.run(`sleep 5`);
 
@@ -130,7 +130,7 @@ describe("Pvault", function () {
     await PvaultService.insertAndPrepareEntity(newUser);
 
     // Make sure it is stored on Vault as well.
-    let listOfVaultObjs = await sdk.ObjectsService.getObjects(
+    let listOfVaultObjs = await sdk.ObjectsService.listObjects(
       collection,
       "AppFunctionality",
       undefined,
@@ -150,7 +150,7 @@ describe("Pvault", function () {
     await PvaultService.removeForeignId(foreignId);
 
     // Make sure it's deleted from Vault.
-    listOfVaultObjs = await sdk.ObjectsService.getObjects(
+    listOfVaultObjs = await sdk.ObjectsService.listObjects(
       collection,
       "AppFunctionality",
       undefined,

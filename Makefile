@@ -5,7 +5,7 @@ MONGO_PASS			?= pass
 PVAULT_DOCKER_NAME	:= pvault-dev
 MONGO_DOCKER_NAME	:= mongo
 
-PVAULT_DOCKER_TAG	?= piiano/pvault-dev:0.9.7-poc-221012
+PVAULT_DOCKER_TAG	?= piiano/pvault-dev:1.0.2
 
 APP_DIR				:= ./demo-app
 SDK_DIR				:= ./pvault-sdk
@@ -26,22 +26,31 @@ mongo-stop:
 ###### PVAULT ######
 .PHONY: pvault-run
 pvault-run: pvault-stop
-	docker run -d -it \
-			   -e PVAULT_LOG_DATADOG_ENABLE=false \
-			   -e PVAULT_SENTRY_ENABLE=false \
-			   -e PVAULT_SERVICE_LICENSE=$(PVAULT_SERVICE_LICENSE) \
-			   -e PVAULT_DEVMODE=1 \
-			   -p 8123:8123 \
-			   -p 5432:5432 \
-			   --name $(PVAULT_DOCKER_NAME) \
-			   $(PVAULT_DOCKER_TAG)
-	
-	sleep 3
+	sleep 6
 	docker exec -i pvault-dev pvault collection add --collection-pvschema " \
 		users PERSONS ( 	\
 			email EMAIL,	\
 			ssn SSN NULL,	\
 		)"
+
+#.PHONY: pvault-run
+#pvault-run: pvault-stop
+#	docker run -d -it \
+#			   -e PVAULT_LOG_DATADOG_ENABLE=false \
+#			   -e PVAULT_SENTRY_ENABLE=false \
+#			   -e PVAULT_SERVICE_LICENSE=$(PVAULT_SERVICE_LICENSE) \
+#			   -e PVAULT_DEVMODE=1 \
+#			   -p 8123:8123 \
+#			   -p 5432:5432 \
+#			   --name $(PVAULT_DOCKER_NAME) \
+#			   $(PVAULT_DOCKER_TAG)
+#
+#	sleep 6
+#	docker exec -i pvault-dev pvault collection add --collection-pvschema " \
+#		users PERSONS ( 	\
+#			email EMAIL,	\
+#			ssn SSN NULL,	\
+#		)"
 
 .PHONY: pvault-stop
 pvault-stop:
@@ -74,16 +83,20 @@ prepare: prepare-app
 stop-prereq: pvault-stop mongo-stop
 
 .PHONY: app-run
-app-run: prepare mongo-run pvault-run
+app-run: prepare mongo-run generate-sdk-ts pvault-run
 	yarn --cwd $(APP_DIR) start:dev
 
 .PHONY: app-test
-app-test: prepare stop-prereq
+app-test: generate-sdk-ts prepare stop-prereq
 	yarn --cwd $(APP_DIR) test
 
 ###### SDK TYPESCRIPT ######
 IN_DOCKER_PWD	:= /local
 OPENAPI_YAML	:= $(SDK_DIR)/openapi.yaml
+
+.PHONY: download_openapi_file
+download_openapi_file:
+	curl -o $(OPENAPI_YAML) https://piiano.com/docs/assets/openapi.yaml
 
 $(SDK_DIR)/generated/index.ts: $(OPENAPI_YAML)
 	yarn --cwd $(SDK_DIR) generate

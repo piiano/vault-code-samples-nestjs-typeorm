@@ -99,7 +99,7 @@ export class UsersService {
     await this.PvaultService.updateAndPrepareEntity(id, user);
 
     const result = await this.userRepository.updateOne(
-      { _id: new ObjectID(id) },
+      { id: new ObjectID(id) },
       {
         $set: {
           ...user,
@@ -116,7 +116,7 @@ export class UsersService {
 
   async deleteById(id: string): Promise<boolean> {
     const result = await this.userRepository
-      .deleteOne({ _id: new ObjectID(id) })
+      .deleteOne({ id: new ObjectID(id) })
       .then((result: DeleteWriteOpResultObject) => result.deletedCount === 1);
 
     // Remove from Vault.

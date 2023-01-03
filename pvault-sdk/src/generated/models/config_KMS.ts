@@ -3,8 +3,7 @@
 /* eslint-disable */
 
 export type config_KMS = {
-    cache_enable?: boolean;
-    seed?: string;
-    uri?: string;
+    seed: string;
+    uri: string;
 };
 

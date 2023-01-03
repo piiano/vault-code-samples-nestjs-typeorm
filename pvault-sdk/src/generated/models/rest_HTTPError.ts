@@ -6,14 +6,14 @@ export type rest_HTTPError = {
     /**
      * The error context.
      */
-    context?: Record<string, string>;
+    context: Record<string, string>;
     /**
      * The error code.
      */
-    error_code?: string;
+    error_code: string;
     /**
      * The error message.
      */
-    message?: string;
+    message: string;
 };
 

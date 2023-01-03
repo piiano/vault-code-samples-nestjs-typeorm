@@ -55,7 +55,7 @@ export class UsersService {
     updateUserDto: UpdateUserDto,
   ): Promise<ObjectID> {
     const result = await this.userRepository.updateOne(
-      { _id: new ObjectID(id) },
+      { id: new ObjectID(id) },
       {
         $set: {
           updateUserDto,
@@ -64,7 +64,7 @@ export class UsersService {
     );
 
     if (result.modifiedCount === 1) {
-      return result.upsertedId._id;
+      return result.upsertedId.id;
     }
 
     throw Error('Failed database update');
@@ -72,7 +72,7 @@ export class UsersService {
 
   async deleteById(id: string): Promise<boolean> {
     return this.userRepository
-      .deleteOne({ _id: new ObjectID(id) })
+      .deleteOne({ id: new ObjectID(id) })
       .then((result: DeleteWriteOpResultObject) => result.deletedCount === 1);
   }
 }

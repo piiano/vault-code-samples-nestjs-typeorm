@@ -44,7 +44,7 @@ If the entity has an auto-generated ID (e.g. using `@ObjectIdColumn` or `@Primar
 
 ```ts
 await this.PvaultService.updateForeignId(
-    userToReturn['_id'].toString(),
+    userToReturn['id'].toString(),
     vaultId,
 );
 ```

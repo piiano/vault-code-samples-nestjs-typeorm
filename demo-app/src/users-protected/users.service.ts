@@ -56,7 +56,7 @@ export class UsersService {
 
     // If ID is auto-generated, update Vault with new ID.
     await this.PvaultService.updateForeignId(
-      userToReturn['id'].toString(),
+      userToReturn['_id'].toString(),
       vaultId,
     );
 

@@ -73,7 +73,7 @@ export class PvaultWp<Entity extends ObjectLiteral> {
 
     // Prepare Vault object from entity configuration.
     const pvaultObj = await filterOnlyVaultProps(entity);
-    pvaultObj["_foreign_id"] = entity["id"];
+    pvaultObj["id"] = entity["id"];
 
     // Add object.
     const addObjRes = await sdk.ObjectsService.addObject(
@@ -85,7 +85,7 @@ export class PvaultWp<Entity extends ObjectLiteral> {
     // Tokenize entity fields according to configuration.
     await walkEntityVaultProps(entity, async (curEntity, propertyName) => {
       const token = await sdk.TokensService.tokenize(this.collection, reason, {
-        object_ids: [addObjRes._id || ""],
+        object_ids: [addObjRes.id || ""],
         props: [propertyName],
         reversible: true,
         reuse_token_id: true,
@@ -98,7 +98,7 @@ export class PvaultWp<Entity extends ObjectLiteral> {
     return {
       entity,
       vaultObj: await filterOnlyVaultProps(entity),
-      vaultId: addObjRes._id,
+      vaultId: addObjRes.id,
     };
   }
 
@@ -109,7 +109,7 @@ export class PvaultWp<Entity extends ObjectLiteral> {
     await sdk.TokensService.deleteTokens(
       this.collection,
       reason,
-      vaultObj._id,
+      vaultObj.id,
       null,
       null
     );
@@ -117,7 +117,7 @@ export class PvaultWp<Entity extends ObjectLiteral> {
     // Update the Vault object.
     await sdk.ObjectsService.updateObjectById(
       this.collection,
-      vaultObj._id,
+      vaultObj.id,
       reason,
       await filterOnlyVaultProps(entity)
     );
@@ -125,7 +125,7 @@ export class PvaultWp<Entity extends ObjectLiteral> {
     // Re-tokenize entity fields according to configuration.
     await walkEntityVaultProps(entity, async (curEntity, propertyName) => {
       const token = await sdk.TokensService.tokenize(this.collection, reason, {
-        object_ids: [vaultObj._id],
+        object_ids: [vaultObj.id],
         props: [propertyName],
         reversible: true,
         reuse_token_id: true,
@@ -175,7 +175,7 @@ export class PvaultWp<Entity extends ObjectLiteral> {
       null,
       null,
       null,
-      props || ["_id"],
+      props || ["id"],
 
     );
 
@@ -192,7 +192,7 @@ export class PvaultWp<Entity extends ObjectLiteral> {
   ): Promise<Record<string, any> | undefined> {
     return this.getVaultIdByMatch(
       {
-        _foreign_id: foreignId,
+        id: foreignId,
       },
       props
     );
@@ -204,7 +204,7 @@ export class PvaultWp<Entity extends ObjectLiteral> {
       [vaultId],
       reason,
       {
-        _foreign_id: id,
+        id: id,
       } as sdk.Object
     );
   }
@@ -214,7 +214,7 @@ export class PvaultWp<Entity extends ObjectLiteral> {
 
     await sdk.ObjectsService.deleteObjectById(
       this.collection,
-      [vaultObj._id],
+      [vaultObj.id],
       reason
     );
   }
@@ -226,7 +226,7 @@ export class PvaultWp<Entity extends ObjectLiteral> {
 
     // Tokenize the email again to the the token.
     const token = await sdk.TokensService.tokenize(this.collection, reason, {
-      object_ids: [vaultObj._id],
+      object_ids: [vaultObj.id],
       props: [propName],
       reversible: true,
       reuse_token_id: true,

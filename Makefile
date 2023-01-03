@@ -26,22 +26,31 @@ mongo-stop:
 ###### PVAULT ######
 .PHONY: pvault-run
 pvault-run: pvault-stop
-	docker run -d -it \
-			   -e PVAULT_LOG_DATADOG_ENABLE=false \
-			   -e PVAULT_SENTRY_ENABLE=false \
-			   -e PVAULT_SERVICE_LICENSE=$(PVAULT_SERVICE_LICENSE) \
-			   -e PVAULT_DEVMODE=1 \
-			   -p 8123:8123 \
-			   -p 5432:5432 \
-			   --name $(PVAULT_DOCKER_NAME) \
-			   $(PVAULT_DOCKER_TAG)
-	
 	sleep 6
 	docker exec -i pvault-dev pvault collection add --collection-pvschema " \
 		users PERSONS ( 	\
 			email EMAIL,	\
 			ssn SSN NULL,	\
 		)"
+
+#.PHONY: pvault-run
+#pvault-run: pvault-stop
+#	docker run -d -it \
+#			   -e PVAULT_LOG_DATADOG_ENABLE=false \
+#			   -e PVAULT_SENTRY_ENABLE=false \
+#			   -e PVAULT_SERVICE_LICENSE=$(PVAULT_SERVICE_LICENSE) \
+#			   -e PVAULT_DEVMODE=1 \
+#			   -p 8123:8123 \
+#			   -p 5432:5432 \
+#			   --name $(PVAULT_DOCKER_NAME) \
+#			   $(PVAULT_DOCKER_TAG)
+#
+#	sleep 6
+#	docker exec -i pvault-dev pvault collection add --collection-pvschema " \
+#		users PERSONS ( 	\
+#			email EMAIL,	\
+#			ssn SSN NULL,	\
+#		)"
 
 .PHONY: pvault-stop
 pvault-stop:
@@ -93,4 +102,4 @@ $(SDK_DIR)/generated/index.ts: $(OPENAPI_YAML)
 	yarn --cwd $(SDK_DIR) generate
 
 .PHONY: generate-sdk-ts
-generate-sdk-ts: download_openapi_file $(SDK_DIR)/generated/index.ts
+generate-sdk-ts: $(SDK_DIR)/generated/index.ts

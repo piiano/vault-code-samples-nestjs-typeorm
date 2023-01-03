@@ -64,7 +64,7 @@ export class UsersService {
     );
 
     if (result.modifiedCount === 1) {
-      return result.upsertedId.id;
+      return result.upsertedId._id;
     }
 
     throw Error('Failed database update');
